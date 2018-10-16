@@ -151,7 +151,7 @@ def merge_fastqs(fastqs, end, out_dir):
         run_shell_cmd(cmd)
         return merged
     else:
-        return hard_link(fastqs[0], merged)
+        return mv(fastqs[0], merged)
 
 def main():
     # read params

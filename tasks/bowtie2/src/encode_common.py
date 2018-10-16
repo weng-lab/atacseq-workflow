@@ -152,11 +152,10 @@ def write_txt(f,s):
         else: arr = s
         for a in arr: fp.write(str(a)+'\n')
 
-def hard_link(f, link):  # hard-link 'f' to 'link'
-    # UNIX only
+def mv(f, link):  # move 'f' to 'link'
     if os.path.abspath(f)==os.path.abspath(link):
-        raise Exception('Trying to hard-link itself. {}'.format(f))    
-    os.system("ln -s %s %s" % (f, link)) #os.link(f, link)
+        return
+    os.system("mv %s %s" % (f, link)) #os.link(f, link)
     return link
 
 def make_hard_link(f, out_dir): # hard-link 'f' to 'out_dir'/'f'

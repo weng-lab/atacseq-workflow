@@ -1,6 +1,7 @@
 #
 # Dockerfile for the Bowtie2 step of the ENCODE-DCC ATAC-seq pipeline
 # scripts from github.com/ENCODE-DCC/atac-seq-pipeline#86ed2d2
+# encode_common and encode_trim_adapter modified to mv files rather than hard link
 #
 
 FROM ubuntu:18.04
