@@ -3,12 +3,14 @@
 # scripts from github.com/ENCODE-DCC/atac-seq-pipeline#86ed2d2
 #
 
-FROM ubuntu:18.04
+FROM alpine:3.8
 
 # Picard jar and sambamba
-RUN apt-get update && apt-get -y install wget default-jre sambamba
+RUN apk add --no-cache wget openjdk7-jre python
+RUN wget https://github.com/biod/sambamba/releases/download/v0.6.8/sambamba-0.6.8-linux-static.gz && \
+    gunzip sambamba-0.6.8-linux-static.gz && mv sambamba-0.6.8-linux-static /bin/sambamba && chmod 755 /bin/sambamba
 RUN wget https://github.com/broadinstitute/picard/releases/download/2.18.14/picard.jar -O /bin/picard.jar && chmod +x /bin/picard.jar
-RUN apt-get -y remove wget && rm -rf /var/lib/apt/lists/*
+RUN apk del wget
 
 # Python scripts
 RUN mkdir /app
