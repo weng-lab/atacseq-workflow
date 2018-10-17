@@ -4,13 +4,22 @@
 # encode_common and encode_trim_adapter modified to mv files rather than hard link
 #
 
-FROM ubuntu:18.04
+FROM alpine:3.8
 
-# bowtie2 binaries and prerequisites
-RUN apt-get update && apt-get -y install wget unzip python samtools perl
+# bowtie2 binaries and prerequisites for samtools
+RUN apk add --no-cache wget unzip python perl build-base zlib-dev
 RUN wget https://github.com/BenLangmead/bowtie2/releases/download/v2.2.6/bowtie2-2.2.6-linux-x86_64.zip && \
     unzip bowtie2-2.2.6-linux-x86_64.zip && mv bowtie2*/bowtie2* /bin && rm -rf bowtie2-2.2.6*
-RUN apt-get -y remove wget unzip && rm -rf /var/lib/apt/lists/*
+
+# install samtools
+RUN wget https://github.com/samtools/samtools/releases/download/1.9/samtools-1.9.tar.bz2 && \
+    tar xvjf samtools-1.9.tar.bz2 && cd samtools-1.9 && \
+    ./configure --without-curses --disable-lzma --disable-bz2 && \
+    make && make install && cd .. && \
+    rm -r samtools-1.9 && rm samtools-1.9.tar.bz2
+
+# clean up after apk
+RUN apk del wget unzip build-base && rm -rf /var/cache/apk/*
 
 # python scripts
 RUN mkdir /app
