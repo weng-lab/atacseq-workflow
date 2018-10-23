@@ -27,7 +27,7 @@ def parse_arguments():
                         help='--score-min for bowtie2.')
     parser.add_argument('--paired-end', action="store_true",
                         help='Paired-end FASTQs.')
-    parser.add_argument('--multimapping', default=0, type=int,
+    parser.add_argument('--multimapping', default=4, type=int,
                         help='Multimapping reads (for bowtie2 -k).')
     parser.add_argument('--nth', type=int, default=1,
                         help='Number of threads to parallelize.')
@@ -103,7 +103,7 @@ def bowtie2_pe(fastq1, fastq2, ref_index_prefix,
 
     cmd = 'bowtie2 {} {} -X2000 --mm --local --threads {} -x {} '
     cmd += '-1 {} -2 {} 2>{} | '
-    cmd += 'samtools view -Su /dev/stdin | samtools sort - {}'
+    cmd += 'samtools view -Su /dev/stdin | samtools sort - -o {}.bam'
     cmd = cmd.format(
         '-k {}'.format(multimapping) if multimapping else '',
         '--score-min {}'.format(score_min) if score_min else '',

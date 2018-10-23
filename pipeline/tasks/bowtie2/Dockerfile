@@ -4,10 +4,10 @@
 # encode_common and encode_trim_adapter modified to mv files rather than hard link
 #
 
-FROM alpine:3.8
+FROM frolvlad/alpine-glibc
 
 # bowtie2 binaries and prerequisites for samtools
-RUN apk add --no-cache wget unzip python perl build-base zlib-dev
+RUN apk add --no-cache wget unzip python perl zlib-dev build-base libstdc++
 RUN wget https://github.com/BenLangmead/bowtie2/releases/download/v2.2.6/bowtie2-2.2.6-linux-x86_64.zip && \
     unzip bowtie2-2.2.6-linux-x86_64.zip && mv bowtie2*/bowtie2* /bin && rm -rf bowtie2-2.2.6*
 

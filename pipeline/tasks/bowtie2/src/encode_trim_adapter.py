@@ -99,11 +99,12 @@ def trim_adapter_se(fastq, adapter, min_trim_len, err_rate, out_dir):
         run_shell_cmd(cmd)
         return trimmed
     else:
-        # make hard link
         linked = os.path.join(out_dir,
             os.path.basename(fastq))
-        os.link(fastq, linked)
-        return linked        
+        if fastq == linked:
+            return linked
+        os.system("mv %s %s" % (fastq, linked))
+        return linked
 
 def trim_adapter_pe(fastq1, fastq2, adapter1, adapter2,
         min_trim_len, err_rate, out_dir):
@@ -124,13 +125,14 @@ def trim_adapter_pe(fastq1, fastq2, adapter1, adapter2,
         run_shell_cmd(cmd)
         return [trimmed1, trimmed2]
     else:
-        # make hard link
         linked1 = os.path.join(out_dir,
             os.path.basename(fastq1))
         linked2 = os.path.join(out_dir,
             os.path.basename(fastq2))
-        os.link(fastq1, linked1)
-        os.link(fastq2, linked2)
+        if linked1 != fastq1:
+            os.system("mv %s %s" % (fastq1, linked1))
+        if linked2 != fastq2:
+            os.system("mv %s %s" % (fastq2, linked2))
         return [linked1, linked2]
 
 # WDL glob() globs in an alphabetical order
