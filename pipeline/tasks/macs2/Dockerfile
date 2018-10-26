@@ -3,12 +3,13 @@
 # scripts from github.com/ENCODE-DCC/atac-seq-pipeline#86ed2d2
 #
 
-FROM ubuntu:18.04
+FROM alpine:3.8
 
 # macs2 binaries and prerequisites
-RUN apt-get update && apt-get -y install python python-pip
+RUN apk add --no-cache python build-base py-pip python-dev
 RUN pip install --no-cache-dir numpy
 RUN pip install --no-cache-dir macs2
+RUN apk del py-pip build-base python-dev
 
 # scripts
 COPY src/encode_common.py /app/encode_common.py
