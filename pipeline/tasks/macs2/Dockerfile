@@ -5,15 +5,11 @@
 
 FROM alpine:3.8
 
-# macs2 binaries and prerequisites
-RUN apk add --no-cache python build-base py-pip python-dev
-RUN pip install --no-cache-dir numpy
-RUN pip install --no-cache-dir macs2
-RUN apk del py-pip build-base python-dev
-
 # scripts
-COPY src/encode_common.py /app/encode_common.py
-COPY src/encode_common_genomic.py /app/encode_common_genomic.py
-COPY src/encode_blacklist_filter.py /app/encode_blacklist_filter.py
-COPY src/encode_frip.py /app/encode_frip.py
-COPY src/encode_macs2_atac.py /app/encode_macs2_atac.py
+COPY src/ /app
+
+# macs2 binaries and prerequisites
+RUN apk add --no-cache python build-base py-pip python-dev && \
+    pip install --no-cache-dir numpy && \
+    pip install --no-cache-dir macs2 && \
+    apk del py-pip build-base python-dev
