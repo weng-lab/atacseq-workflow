@@ -1,0 +1,5 @@
+install.packages("Rcpp", repos="http://cran.us.r-project.org")
+install.packages("caTools", repos="http://cran.us.r-project.org")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager", repos="http://cran.us.r-project.org")
+BiocManager::install("Rsamtools", version = "3.8")
