@@ -5,21 +5,16 @@
 #
 # encode_xcor modified to point to run_spp.R
 # encode_common modified to mv files rather than hard link
+# run_spp.R modified to load required caTools
 #
 
 FROM conoria/alpine-r
 
 # scripts
-RUN mkdir /app
-COPY src/encode_xcor.py /app/encode_xcor.py
-COPY src/encode_common.py /app/encode_common.py
-COPY src/encode_common_genomic.py /app/encode_common_genomic.py
-COPY src/encode_common_log_parser.py /app/encode_common_log_parser.py
-COPY src/run_spp.R /app/run_spp.R
-COPY src/install.R /app/install.R
+COPY src/ /app
 
 # SPP and dependencies
-RUN apk add --no-cache python wget boost-dev && \
+RUN apk add --no-cache python wget boost-dev ghostscript && \
     Rscript /app/install.R && rm /app/install.R && \
     wget https://github.com/hms-dbmi/spp/archive/1.15.2.tar.gz && \
     R CMD INSTALL 1.15.2.tar.gz && rm 1.15.2.tar.gz && \
