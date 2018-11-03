@@ -6,16 +6,13 @@
 
 FROM alpine:3.8
 
-# bedtools
-RUN apk add --no-cache git bash build-base zlib-dev python libstdc++
-RUN git clone https://github.com/arq5x/bedtools2 && cd bedtools2 && make && \
-    mv bin/* /bin && cd .. && rm -rf bedtools2
-RUN wget https://github.com/biod/sambamba/releases/download/v0.6.8/sambamba-0.6.8-linux-static.gz && \
-    gunzip sambamba-0.6.8-linux-static.gz && mv sambamba-0.6.8-linux-static /bin/sambamba && chmod 755 /bin/sambamba
-RUN apk del git bash build-base 
+# scripts
+COPY src/ /app
 
-# Python scripts
-RUN mkdir /app
-COPY src/encode_bam2ta.py /app/encode_bam2ta.py
-COPY src/encode_common_genomic.py /app/encode_common_genomic.py
-COPY src/encode_common.py /app/encode_common.py
+# bedtools
+RUN apk add --no-cache git bash build-base zlib-dev python libstdc++ && \
+    git clone https://github.com/arq5x/bedtools2 && cd bedtools2 && make && \
+    mv bin/* /bin && cd .. && rm -rf bedtools2 && \
+    wget https://github.com/biod/sambamba/releases/download/v0.6.8/sambamba-0.6.8-linux-static.gz && \
+    gunzip sambamba-0.6.8-linux-static.gz && mv sambamba-0.6.8-linux-static /bin/sambamba && chmod 755 /bin/sambamba && \
+    apk del git bash build-base 
