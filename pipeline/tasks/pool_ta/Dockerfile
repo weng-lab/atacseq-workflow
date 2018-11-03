@@ -6,11 +6,8 @@
 
 FROM alpine:3.8
 
+# python scripts
+COPY src/ /app
+
 # python
 RUN apk add --no-cache python
-
-# python scripts
-RUN mkdir /app
-COPY src/encode_pool_ta.py /app/encode_pool_ta.py
-COPY src/encode_common.py /app/encode_common.py
-
