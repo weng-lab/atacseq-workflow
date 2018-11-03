@@ -9,7 +9,7 @@ FROM alpine:3.8
 # scripts
 COPY src/ /app
 
-# bedtools
+# bedtools, sambamba
 RUN apk add --no-cache git bash build-base zlib-dev python libstdc++ && \
     git clone https://github.com/arq5x/bedtools2 && cd bedtools2 && make && \
     mv bin/* /bin && cd .. && rm -rf bedtools2 && \
