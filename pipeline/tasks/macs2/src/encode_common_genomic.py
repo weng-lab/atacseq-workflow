@@ -264,7 +264,7 @@ def peak_to_bigbed(peak, peak_type, chrsz, out_dir):
     run_shell_cmd(cmd1)
     cmd2 = "zcat -f {} | sort -k1,1 -k2,2n > {}".format(peak, bigbed_tmp)
     run_shell_cmd(cmd2)
-    cmd3 = "bedClip {} {} {}".format(bigbed_tmp, chrsz_tmp, bigbed_tmp2)
+    cmd3 = "bedclip.py {} {} {}".format(bigbed_tmp, chrsz_tmp, bigbed_tmp2)
     run_shell_cmd(cmd3)
     cmd4 = "bedToBigBed {} {} {} {}".format(bed_param, bigbed_tmp2, chrsz_tmp, bigbed)
     run_shell_cmd(cmd4)
