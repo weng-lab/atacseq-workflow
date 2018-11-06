@@ -16,7 +16,7 @@ COPY src/ /app
 RUN apk add --no-cache git py-pip bash build-base zlib-dev python python-dev libstdc++ && \
     apk add --no-cache mysql-dev libpng-dev linux-headers && \
     git clone https://github.com/weng-lab/kent && \
-    cd kent/src/lib && make && cd ../jkOwnLib && make && cd ../htslib && make && \
+    cd kent/src/lib && make CFLAGS=-DLIBUUID_NOT_PRESENT && cd ../jkOwnLib && make && cd ../htslib && make && \
     mkdir -p /root/bin/x86_64 && cd ../utils/bedClip && make && cd ../bedGraphToBigWig && make && \
     cd ../bedToBigBed && make && \
     cd / && rm -rf kent && mv /root/bin/x86_64/* /bin && \
