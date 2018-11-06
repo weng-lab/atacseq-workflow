@@ -83,7 +83,6 @@ def samtools_name_sort(bam, nth, out_dir):
     nmsrt_bam = '{}.nmsrt.bam'.format(prefix)
 
     cmd = 'samtools sort -n {} -o {} -T {} -@ {}'.format(
-        out_dir,
         bam,
         nmsrt_bam,
         prefix,
