@@ -104,7 +104,7 @@ def macs2(ta, chrsz, gensz, pval_thresh, smooth_win, cap_num_peak,
         run_shell_cmd(cmd3)
 
         cmd4 = 'bedtools slop -i "{}"_FE.bdg -g {} -b 0 | '
-        cmd4 += 'bedClip stdin {} {}'
+        cmd4 += 'bedclip.py stdin {} {}'
         cmd4 = cmd4.format(
             prefix, 
             chrsz, 
@@ -139,7 +139,7 @@ def macs2(ta, chrsz, gensz, pval_thresh, smooth_win, cap_num_peak,
         run_shell_cmd(cmd7)
 
         cmd8 = 'bedtools slop -i "{}"_ppois.bdg -g {} -b 0 | '
-        cmd8 += 'bedClip stdin {} {}'
+        cmd8 += 'bedclip.py stdin {} {}'
         cmd8 = cmd8.format(
             prefix,
             chrsz,
