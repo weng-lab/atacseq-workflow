@@ -69,7 +69,8 @@ def sambamba_sort(bam, nth, out_dir):
         os.path.basename(strip_ext_bam(bam)))
     srt_bam = '{}.srt.bam'.format(prefix)
 
-    cmd = 'sambamba sort {} -o {} -t {}'.format(
+    cmd = 'sambamba sort --tmpdir={} {} -o {} -t {}'.format(
+        out_dir,
         bam,
         srt_bam,
         nth)
@@ -82,6 +83,7 @@ def samtools_name_sort(bam, nth, out_dir):
     nmsrt_bam = '{}.nmsrt.bam'.format(prefix)
 
     cmd = 'samtools sort -n {} -o {} -T {} -@ {}'.format(
+        out_dir,
         bam,
         nmsrt_bam,
         prefix,
@@ -94,7 +96,8 @@ def sambamba_name_sort(bam, nth, out_dir):
         os.path.basename(strip_ext_bam(bam)))
     nmsrt_bam = '{}.nmsrt.bam'.format(prefix)
 
-    cmd = 'sambamba sort -n {} -o {} -t {}'.format(
+    cmd = 'sambamba sort --tmpdir={} -n {} -o {} -t {}'.format(
+        out_dir,
         bam,
         nmsrt_bam,
         nth)

@@ -1,7 +1,9 @@
 #
 # Dockerfile for the bam2ta (bam to tagAlign) step of the ENCODE-DCC ATAC-seq pipeline
 # scripts from github.com/ENCODE-DCC/atac-seq-pipeline#86ed2d2
+#
 # modified encode_bam2ta to remove unsupported -P option in alpine grep
+# modified encode_common_genomic to allow a tmpdir on the data disk rather than the smaller boot disk for sambamba
 #
 
 FROM alpine:3.8
