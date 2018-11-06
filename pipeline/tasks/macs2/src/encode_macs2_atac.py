@@ -79,7 +79,7 @@ def macs2(ta, chrsz, gensz, pval_thresh, smooth_win, cap_num_peak,
         smooth_win)
     run_shell_cmd(cmd0)
 
-    cmd1 = 'LC_COLLATE=C sort -k 8gr,8gr "{}"_peaks.narrowPeak | '
+    cmd1 = 'LC_COLLATE=C sort -k 8gr,8gr "{}_peaks.narrowPeak" | '
     cmd1 += 'awk \'BEGIN{{OFS="\\t"}}{{$4="Peak_"NR; if ($2<0) $2=0; if ($3<0) $3=0; print $0}}\' > {}'
     cmd1 = cmd1.format(
         prefix,
@@ -94,8 +94,8 @@ def macs2(ta, chrsz, gensz, pval_thresh, smooth_win, cap_num_peak,
     rm_f(npeak_tmp)
 
     if make_signal:
-        cmd3 = 'macs2 bdgcmp -t "{}"_treat_pileup.bdg '
-        cmd3 += '-c "{}"_control_lambda.bdg '
+        cmd3 = 'macs2 bdgcmp -t "{}_treat_pileup.bdg" '
+        cmd3 += '-c "{}_control_lambda.bdg" '
         cmd3 += '--o-prefix "{}" -m FE '
         cmd3 = cmd3.format(
             prefix, 
@@ -103,8 +103,8 @@ def macs2(ta, chrsz, gensz, pval_thresh, smooth_win, cap_num_peak,
             prefix)
         run_shell_cmd(cmd3)
 
-        cmd4 = 'bedtools slop -i "{}"_FE.bdg -g {} -b 0 | '
-        cmd4 += 'bedclip.py stdin {} {}'
+        cmd4 = 'bedtools slop -i "{}_FE.bdg" -g {} -b 0 | '
+        cmd4 += 'bedClip stdin {} {}'
         cmd4 = cmd4.format(
             prefix, 
             chrsz, 
@@ -128,8 +128,8 @@ def macs2(ta, chrsz, gensz, pval_thresh, smooth_win, cap_num_peak,
         # sval counts the number of tags per million in the (compressed) BED file
         sval = float(get_num_lines(ta))/1000000.0
         
-        cmd7 = 'macs2 bdgcmp -t "{}"_treat_pileup.bdg '
-        cmd7 += '-c "{}"_control_lambda.bdg '
+        cmd7 = 'macs2 bdgcmp -t "{}_treat_pileup.bdg" '
+        cmd7 += '-c "{}_control_lambda.bdg" '
         cmd7 += '--o-prefix {} -m ppois -S {}'
         cmd7 = cmd7.format(
             prefix,
@@ -138,8 +138,9 @@ def macs2(ta, chrsz, gensz, pval_thresh, smooth_win, cap_num_peak,
             sval)
         run_shell_cmd(cmd7)
 
-        cmd8 = 'bedtools slop -i "{}"_ppois.bdg -g {} -b 0 | '
-        cmd8 += 'bedclip.py stdin {} {}'
+        cmd8 = 'bedtools slop -i "{}_ppois.bdg" -g {} -b 0 | '
+        cmd8 += 'bedClip stdin {} {}'
+
         cmd8 = cmd8.format(
             prefix,
             chrsz,
