@@ -18,7 +18,7 @@ def parse_arguments():
                         help='Path for TAGALIGN file.')
     parser.add_argument('--chrsz', type=str,
                         help='2-col chromosome sizes file.')
-    parser.add_argument('--gensz', type=str,
+    parser.add_argument('--gensz', type=str, default = '',
                         help='Genome size (sum of entries in 2nd column of \
                             chr. sizes file, or hs for human, ms for mouse).')
     parser.add_argument('--pval-thresh', default=0.01, type=float,
@@ -40,6 +40,10 @@ def parse_arguments():
     args = parser.parse_args()
     if args.blacklist.endswith('/dev/null'):
         args.blacklist = ''
+
+    if args.gensz == '':
+        with open(args.chrsz, 'r') as f:
+            args.gensz = sum([ int(x.strip().split('\t')[-1]) for x in f ])
 
     log.setLevel(args.log_level)
     log.info(sys.argv)

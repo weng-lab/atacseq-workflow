@@ -3,6 +3,7 @@
 # scripts from github.com/ENCODE-DCC/atac-seq-pipeline#86ed2d2
 # MUSL-compatible Kent utils from github.com/weng-lab/kent
 #
+# encode_macs2_atac modified to compute gensz automatically from chrsz
 # encode_blacklist_filter and encode_common_genomic modified not to use grep -P (unsupported in alpine)
 # "unusual" chromosomes will not be filtered; use a minimal chrom sizes file to remove these
 #
