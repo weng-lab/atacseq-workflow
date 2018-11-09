@@ -39,7 +39,7 @@ def parse_arguments():
 def bam2ta_se(bam, regex_grep_v_ta, out_dir):
     prefix = os.path.join(out_dir,
         os.path.basename(strip_ext_bam(bam)))
-    ta = '{}.tagAlign.gz'.format(prefix)
+    ta = '{}.se.tagAlign.gz'.format(prefix)
 
     cmd = 'bedtools bamtobed -i {} | '
     cmd += 'awk \'BEGIN{{OFS="\\t"}}{{$4="N";$5="1000";print $0}}\' | '
@@ -82,7 +82,6 @@ def bam2ta_pe(bam, regex_grep_v_ta, nth, out_dir):
         bedpe,
         ta)
     run_shell_cmd(cmd2)
-    rm_f(bedpe)
     return ta
 
 def tn5_shift_ta(ta, out_dir):
@@ -112,12 +111,12 @@ def main():
     temp_files = [] # files to deleted later at the end
 
     log.info('Converting BAM to TAGALIGN...')
+    ta = bam2ta_se(args.bam, args.regex_grep_v_ta,
+                   args.out_dir)
     if args.paired_end:
+        seta = ta
         ta = bam2ta_pe(args.bam, args.regex_grep_v_ta,
                         args.nth, args.out_dir)
-    else:
-        ta = bam2ta_se(args.bam, args.regex_grep_v_ta,
-                        args.out_dir)
 
     if args.subsample:
         log.info('Subsampling TAGALIGN...')
