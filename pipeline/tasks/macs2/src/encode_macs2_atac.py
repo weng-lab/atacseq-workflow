@@ -57,6 +57,7 @@ def macs2(ta, chrsz, gensz, pval_thresh, smooth_win, cap_num_peak,
         prefix,
         'pval{}'.format(pval_thresh),
         human_readable_number(cap_num_peak))
+    pileup_bigwig = '{}.pileup.bigwig'.format(prefix)
     fc_bigwig = '{}.fc.signal.bigwig'.format(prefix)
     pval_bigwig = '{}.pval.signal.bigwig'.format(prefix)
     # temporary files
@@ -98,6 +99,28 @@ def macs2(ta, chrsz, gensz, pval_thresh, smooth_win, cap_num_peak,
     rm_f(npeak_tmp)
 
     if make_signal:
+        cmd4 = 'bedtools slop -i "{}_treat_pileup.bdg" -g {} -b 0 | '
+        cmd4 += 'bedClip stdin {} {}_treat_pileup.clipped.bdg'
+        cmd4 = cmd4.format(
+            prefix,
+            chrsz, 
+            chrsz, 
+            prefix)
+        run_shell_cmd(cmd4)
+      
+        cmd5 = 'LC_COLLATE=C sort -k1,1 -k2,2n {}_treat_pileup.clipped.bdg > {}_treat_pileup.sorted.bdg'
+        cmd5 = cmd5.format(
+            prefix,
+            prefix)
+        run_shell_cmd(cmd5)
+
+        cmd6 = 'bedGraphToBigWig {}_treat_pileup.sorted.bdg {} {}'
+        cmd6 = cmd6.format(
+            prefix,
+            chrsz,
+            pileup_bigwig)
+        run_shell_cmd(cmd6)
+        
         cmd3 = 'macs2 bdgcmp -t "{}_treat_pileup.bdg" '
         cmd3 += '-c "{}_control_lambda.bdg" '
         cmd3 += '--o-prefix "{}" -m FE '
@@ -170,8 +193,8 @@ def macs2(ta, chrsz, gensz, pval_thresh, smooth_win, cap_num_peak,
         pval_bigwig = '/dev/null'
 
     # remove temporary files
-    temp_files.extend([fc_bedgraph,fc_bedgraph_srt,
-                        pval_bedgraph,pval_bedgraph_srt])
+    temp_files.extend([ fc_bedgraph, fc_bedgraph_srt,
+                        pval_bedgraph, pval_bedgraph_srt ])
     temp_files.append("{}_*".format(prefix))
     rm_f(temp_files)
 
