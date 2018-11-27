@@ -9,7 +9,7 @@ cd "$(dirname "$(dirname "$0")")"
 # import common stuff
 source scripts/lib/common.sh
 
-for taskDir in pipeline/tasks/*/ ; do
+for taskDir in tasks/*/ ; do
     IMAGE_NAME="${ORG}/${IMAGE_PREFIX}-$(basename ${taskDir})"
     VERSION=$(cat ${taskDir}Versionfile)
     TAG=${IMAGE_NAME}:${VERSION}

@@ -33,6 +33,7 @@ def parse_arguments():
                         help='Blacklist BED file.')
     parser.add_argument('--out-dir', default='', type=str,
                         help='Output directory.')
+    parser.add_argument('--paired-end', action="store_true", default=False)
     parser.add_argument('--log-level', default='INFO', 
                         choices=['NOTSET','DEBUG','INFO',
                             'WARNING','CRITICAL','ERROR','CRITICAL'],
@@ -50,7 +51,7 @@ def parse_arguments():
     return args
 
 def macs2(ta, chrsz, gensz, pval_thresh, smooth_win, cap_num_peak, 
-    make_signal, out_dir):
+          make_signal, out_dir, paired_end = False):
     prefix = os.path.join(out_dir,
         os.path.basename(strip_ext_ta(ta)))
     npeak = '{}.{}.{}.narrowPeak.gz'.format(
@@ -70,12 +71,13 @@ def macs2(ta, chrsz, gensz, pval_thresh, smooth_win, cap_num_peak,
     temp_files = []
 
     cmd0 = 'macs2 callpeak '
-    cmd0 += '-t {} -f BED -n {} -g {} -p {} '
+    cmd0 += '-t {} -f BED{} -n {} -g {} -p {} '
     cmd0 += '--shift {} --extsize {} '
     cmd0 += '--nomodel -B --SPMR '
     cmd0 += '--keep-dup all --call-summits '
     cmd0 = cmd0.format(
         ta,
+        "PE" if paired_end else "",
         prefix,
         gensz,
         pval_thresh,
@@ -188,7 +190,7 @@ def main():
     npeak, fc_bigwig, pval_bigwig = macs2(
         args.ta, args.chrsz, args.gensz, args.pval_thresh,
         args.smooth_win, args.cap_num_peak, args.make_signal, 
-        args.out_dir)
+        args.out_dir, args.paired_end)
 
     log.info('Checking if output is empty...')
     assert_file_not_empty(npeak)
