@@ -19,9 +19,9 @@ def parse_arguments(debug=False):
     parser.add_argument('--fastqs', nargs='+', type=str,
                         help='List of input FASTQs (single-end only; for paired-end, use --fastqs-r1 and --fastqs-r2).')
     parser.add_argument('--fastqs-r1', nargs='+', type=str,
-                        help='List of input FASTQs (single-end only; for paired-end, use --fastqs-r1 and --fastqs-r2).')
+                        help='List of read 1 input FASTQs (paired-end only; for single-end, use --fastqs).')
     parser.add_argument('--fastqs-r2', nargs='+', type=str,
-                        help='List of input FASTQs (single-end only; for paired-end, use --fastqs-r1 and --fastqs-r2).')
+                        help='List of read 2 input FASTQs (paired-end only).')
     parser.add_argument('--auto-detect-adapter', action='store_true',
                         help='Automatically detect/trim adapters \
                             (supported system: Illumina, Nextera and smallRNA).')
