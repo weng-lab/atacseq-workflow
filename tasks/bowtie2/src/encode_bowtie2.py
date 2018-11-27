@@ -13,6 +13,8 @@ from encode_common_genomic import *
 def parse_arguments():
     parser = argparse.ArgumentParser(prog='ENCODE DCC bowtie2 aligner.',
                                         description='')
+    parser.add_argument("--output-prefix", type = str, default = 'output',
+                        help = "output file name prefix; defaults to 'output'")
     parser.add_argument('bowtie2_index_prefix_or_tar', type=str,
                         help='Path for prefix (or a tarball .tar) \
                             for reference bowtie2 index. \
@@ -20,9 +22,13 @@ def parse_arguments():
                             Tar ball must be packed without compression \
                             and directory by using command line \
                             "tar cvf [TAR] [TAR_PREFIX].*.bt2".')
-    parser.add_argument('fastqs', nargs='+', type=str,
-                        help='List of FASTQs (R1 and R2). \
-                            FASTQs must be compressed with gzip (with .gz).')
+    parser.add_argument('--fastq', type=str,
+                        help='input FASTQ (single end only; for paired-end, use --fastq-r1 and --fastq-r2). \
+                        FASTQ must be compressed with gzip (with .gz).')
+    parser.add_argument('--fastq-r1', type=str,
+                        help='End 1 FASTQ for a paired-end experiment.')
+    parser.add_argument('--fastq-r2', type=str,
+                        help='End 2 FASTQ for a paired-end experiment.')
     parser.add_argument('--score-min', default='', type=str,
                         help='--score-min for bowtie2.')
     parser.add_argument('--paired-end', action="store_true",
@@ -40,10 +46,10 @@ def parse_arguments():
     args = parser.parse_args()
 
     # check if fastqs have correct dimension
-    if args.paired_end and len(args.fastqs)!=2:
-        raise argparse.ArgumentTypeError('Need 2 fastqs for paired end.')
-    if not args.paired_end and len(args.fastqs)!=1:
-        raise argparse.ArgumentTypeError('Need 1 fastq for single end.')
+    if args.paired_end and (len(args.fastq_r1) != 0 or len(args.fastq_r2) != 0):
+        raise argparse.ArgumentTypeError('If --paired-end is set, --fastq-r1 and --fastq-r2 must be used.')
+    if not args.paired_end and len(args.fastq) != 1:
+        raise argparse.ArgumentTypeError('If --paired-end is not set (single end), --fastq must be used.')
 
     log.setLevel(args.log_level)
     log.info(sys.argv)    
@@ -58,8 +64,8 @@ def parse_arguments():
 def strip_merge_fastqs_prefix(fastq):
     return re.sub(r'^merge\_fastqs\_R\d\_','',str(fastq))
 
-def make_read_length_file(fastq, out_dir):
-    prefix = os.path.join(out_dir, "output")
+def make_read_length_file(fastq, out_dir, prefix = "output"):
+    prefix = os.path.join(out_dir, prefix)
     txt = '{}.read_length.txt'.format(prefix)
     read_length = get_read_length(fastq)
     with open(txt,'w') as fp:
@@ -67,8 +73,8 @@ def make_read_length_file(fastq, out_dir):
     return txt
 
 def bowtie2_se(fastq, ref_index_prefix, 
-        multimapping, score_min, nth, out_dir):
-    prefix = os.path.join(out_dir, "output")
+               multimapping, score_min, nth, out_dir, prefix = "output"):
+    prefix = os.path.join(out_dir, prefix)
     bam = '{}.bam'.format(prefix)
     align_log = '{}.align.log'.format(prefix)
 
@@ -89,8 +95,8 @@ def bowtie2_se(fastq, ref_index_prefix,
     return bam, align_log
 
 def bowtie2_pe(fastq1, fastq2, ref_index_prefix, 
-        multimapping, score_min, nth, out_dir):
-    prefix = os.path.join(out_dir, "output")
+               multimapping, score_min, nth, out_dir, prefix = "output"):
+    prefix = os.path.join(out_dir, prefix)
     bam = '{}.bam'.format(prefix)
     bai = '{}.bam.bai'.format(prefix)
     align_log = '{}.align.log'.format(prefix)
@@ -132,10 +138,10 @@ def main():
     # generate read length file
     log.info('Generating read length file...')
     R1_read_length_file = make_read_length_file(
-                            args.fastqs[0], args.out_dir)
+                            args.fastq_r1, args.out_dir, args.output_prefix)
     if args.paired_end:
         R2_read_length_file = make_read_length_file(
-                            args.fastqs[1], args.out_dir)
+                            args.fastq_r2, args.out_dir, args.output_prefix)
     
     # if bowtie2 index is tarball then unpack it
     if args.bowtie2_index_prefix_or_tar.endswith('.tar'):
@@ -157,16 +163,16 @@ def main():
     log.info('Running bowtie2...')
     if args.paired_end:
         bam, align_log = bowtie2_pe(
-            args.fastqs[0], args.fastqs[1], 
+            args.fastq_r1, args.fastq_r2, 
             bowtie2_index_prefix,
             args.multimapping, args.score_min, args.nth,
-            args.out_dir)
+            args.out_dir, args.output_prefix)
     else:
         bam, align_log = bowtie2_se(
-            args.fastqs[0], 
+            args.fastq, 
             bowtie2_index_prefix,
             args.multimapping, args.score_min, args.nth,
-            args.out_dir)
+            args.out_dir, args.output_prefix)
 
     # initialize multithreading
     log.info('Initializing multi-threading...')

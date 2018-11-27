@@ -223,7 +223,7 @@ def main():
                     args.min_trim_len,
                     args.err_rate,
                     args.out_dir,
-                    args.prefix))
+                    args.output_prefix))
         else:
             ret_val = pool.apply_async(
                 trim_adapter_se,(
@@ -232,7 +232,7 @@ def main():
                     args.min_trim_len,
                     args.err_rate,
                     args.out_dir,
-                    args.prefix))
+                    args.output_prefix))
         ret_vals.append(ret_val)
 
     # update array with trimmed fastqs
@@ -250,11 +250,11 @@ def main():
     log.info('Merging fastqs...')
     log.info('R1 to be merged: {}'.format(trimmed_fastqs_R1))
     ret_val1 = pool.apply_async(merge_fastqs,
-                    (trimmed_fastqs_R1, 'R1', args.out_dir, args.prefix,))
+                    (trimmed_fastqs_R1, 'R1', args.out_dir, args.output_prefix,))
     if args.paired_end:
         log.info('R2 to be merged: {}'.format(trimmed_fastqs_R2))
         ret_val2 = pool.apply_async(merge_fastqs,
-                        (trimmed_fastqs_R2, 'R2', args.out_dir, args.prefix,))
+                        (trimmed_fastqs_R2, 'R2', args.out_dir, args.output_prefix,))
     # gather
     R1_merged = ret_val1.get(BIG_INT)
     if args.paired_end:
