@@ -46,7 +46,7 @@ def parse_arguments():
     args = parser.parse_args()
 
     # check if fastqs have correct dimension
-    if args.paired_end and (len(args.fastq_r1) != 0 or len(args.fastq_r2) != 0):
+    if args.paired_end and (len(args.fastq_r1) != 1 or len(args.fastq_r2) != 1):
         raise argparse.ArgumentTypeError('If --paired-end is set, --fastq-r1 and --fastq-r2 must be used.')
     if not args.paired_end and len(args.fastq) != 1:
         raise argparse.ArgumentTypeError('If --paired-end is not set (single end), --fastq must be used.')
