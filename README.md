@@ -1,2 +1,2 @@
-# atacseq-docker-images
-Individual Docker images for each step of the ENCODE DCC ATAC-seq pipeline
+# atacseq-workflow
+Krews workflow for processing ATAC-seq data, adapted from the ENCODE-DCC pipeline.
