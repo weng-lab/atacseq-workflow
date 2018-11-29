@@ -8,13 +8,13 @@ Thumbs.db
 .DS_Store
 
 # intellij build dir
-/out
+**/out
 
 # command line build dir
-/build
+**/build
 
 # Intellij project files
-/.idea
+**/.idea
 *.iml
 
 # Eclipse project files
