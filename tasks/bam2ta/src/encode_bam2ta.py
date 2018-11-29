@@ -15,6 +15,8 @@ def parse_arguments():
                         help='Path for BAM file.')
     parser.add_argument('--disable-tn5-shift', action="store_true",
                         help='Disable TN5 shifting for DNase-Seq.')
+    parser.add_argument("--output-prefix", type = str, default = 'output',
+                        help = "output file name prefix; defaults to 'output'")
     parser.add_argument('--regex-grep-v-ta', default='chrM',
                         help='Pattern to remove matching reads from TAGALIGN.')
     parser.add_argument('--subsample', type=int, default=0,
@@ -36,9 +38,8 @@ def parse_arguments():
     log.info(sys.argv)
     return args
 
-def bam2ta_se(bam, regex_grep_v_ta, out_dir):
-    prefix = os.path.join(out_dir,
-        os.path.basename(strip_ext_bam(bam)))
+def bam2ta_se(bam, regex_grep_v_ta, out_dir, prefix = "output"):
+    prefix = os.path.join(out_dir, prefix)
     ta = '{}.se.tagAlign.gz'.format(prefix)
 
     cmd = 'bedtools bamtobed -i {} | '
@@ -52,9 +53,8 @@ def bam2ta_se(bam, regex_grep_v_ta, out_dir):
     run_shell_cmd(cmd)
     return ta
 
-def bam2ta_pe(bam, regex_grep_v_ta, nth, out_dir):
-    prefix = os.path.join(out_dir,
-        os.path.basename(strip_ext_bam(bam)))
+def bam2ta_pe(bam, regex_grep_v_ta, nth, out_dir, prefix = "output"):
+    prefix = os.path.join(out_dir, prefix)
     ta = '{}.tagAlign.gz'.format(prefix)
     # intermediate files
     bedpe = '{}.bedpe.gz'.format(prefix)
@@ -84,9 +84,8 @@ def bam2ta_pe(bam, regex_grep_v_ta, nth, out_dir):
     run_shell_cmd(cmd2)
     return ta
 
-def tn5_shift_ta(ta, out_dir):
-    prefix = os.path.join(out_dir,
-        os.path.basename(strip_ext_ta(ta)))
+def tn5_shift_ta(ta, out_dir, prefix = "output"):
+    prefix = os.path.join(out_dir, prefix)
     shifted_ta = '{}.tn5.tagAlign.gz'.format(prefix)
 
     cmd = 'zcat -f {} | '
@@ -112,20 +111,20 @@ def main():
 
     log.info('Converting BAM to TAGALIGN...')
     ta = bam2ta_se(args.bam, args.regex_grep_v_ta,
-                   args.out_dir)
+                   args.out_dir, args.output_prefix)
     if args.paired_end:
         seta = ta
         ta = bam2ta_pe(args.bam, args.regex_grep_v_ta,
-                        args.nth, args.out_dir)
+                        args.nth, args.out_dir, args.output_prefix)
 
     if args.subsample:
         log.info('Subsampling TAGALIGN...')
         if args.paired_end:
             subsampled_ta = subsample_ta_pe(
-                ta, args.subsample, False, False, args.out_dir)
+                ta, args.subsample, False, False, args.out_dir, args.output_prefix)
         else:
             subsampled_ta = subsample_ta_se(
-                ta, args.subsample, False, args.out_dir)
+                ta, args.subsample, False, args.out_dir, args.output_prefix)
         temp_files.append(ta)
     else:
         subsampled_ta = ta
@@ -134,7 +133,7 @@ def main():
         shifted_ta = subsampled_ta
     else:
         log.info("TN5-shifting TAGALIGN...")
-        shifted_ta = tn5_shift_ta(subsampled_ta, args.out_dir)
+        shifted_ta = tn5_shift_ta(subsampled_ta, args.out_dir, args.output_prefix)
         temp_files.append(subsampled_ta)
 
     log.info('Removing temporary files...')
