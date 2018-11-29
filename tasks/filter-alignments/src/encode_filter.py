@@ -14,6 +14,8 @@ def parse_arguments():
                                         description='')
     parser.add_argument('bam', type=str,
                         help='Path for raw BAM file.')
+    parser.add_argument("--output-prefix", type = str, default = 'output',
+                        help = "output file name prefix; defaults to 'output'")
     parser.add_argument('--dup-marker', type=str, choices=['picard','sambamba'],
                         default='picard',
                         help='Dupe marker for filtering mapped reads in BAM.')    
@@ -39,9 +41,8 @@ def parse_arguments():
     log.info(sys.argv)
     return args
 
-def rm_unmapped_lowq_reads_se(bam, multimapping, mapq_thresh, nth, out_dir):
-    prefix = os.path.join(out_dir,
-        os.path.basename(strip_ext_bam(bam)))
+def rm_unmapped_lowq_reads_se(bam, multimapping, mapq_thresh, nth, out_dir, prefix = "output"):
+    prefix = os.path.join(out_dir, prefix)
     filt_bam = '{}.filt.bam'.format(prefix)
 
     if multimapping:        
@@ -80,9 +81,8 @@ def rm_unmapped_lowq_reads_se(bam, multimapping, mapq_thresh, nth, out_dir):
 
     return filt_bam
 
-def rm_unmapped_lowq_reads_pe(bam, multimapping, mapq_thresh, nth, out_dir):
-    prefix = os.path.join(out_dir,
-        os.path.basename(strip_ext_bam(bam)))
+def rm_unmapped_lowq_reads_pe(bam, multimapping, mapq_thresh, nth, out_dir, prefix = "output"):
+    prefix = os.path.join(out_dir, prefix)
     filt_bam = '{}.filt.bam'.format(prefix)
     tmp_filt_bam = '{}.tmp_filt.bam'.format(prefix)
     fixmate_bam = '{}.fixmate.bam'.format(prefix)
@@ -156,9 +156,8 @@ def rm_unmapped_lowq_reads_pe(bam, multimapping, mapq_thresh, nth, out_dir):
     rm_f(fixmate_bam)
     return filt_bam
 
-def mark_dup_picard(bam, out_dir): # shared by both se and pe
-    prefix = os.path.join(out_dir,
-        os.path.basename(strip_ext_bam(bam)))
+def mark_dup_picard(bam, out_dir, prefix = "output"): # shared by both se and pe
+    prefix = os.path.join(out_dir, prefix)
     # strip extension appended in the previous step
     prefix = strip_ext(prefix,'filt') 
     dupmark_bam = '{}.dupmark.bam'.format(prefix)
@@ -178,9 +177,8 @@ def mark_dup_picard(bam, out_dir): # shared by both se and pe
     run_shell_cmd(cmd)
     return dupmark_bam, dup_qc
 
-def mark_dup_sambamba(bam, nth, out_dir): # shared by both se and pe
-    prefix = os.path.join(out_dir,
-        os.path.basename(strip_ext_bam(bam)))
+def mark_dup_sambamba(bam, nth, out_dir, prefix = "output"): # shared by both se and pe
+    prefix = os.path.join(out_dir, prefix)
     # strip extension appended in the previous step
     prefix = strip_ext(prefix,'filt') 
     dupmark_bam = '{}.dupmark.bam'.format(prefix)
@@ -197,9 +195,8 @@ def mark_dup_sambamba(bam, nth, out_dir): # shared by both se and pe
     run_shell_cmd(cmd)
     return dupmark_bam, dup_qc
 
-def rm_dup_se(dupmark_bam, nth, out_dir):
-    prefix = os.path.join(out_dir,
-        os.path.basename(strip_ext_bam(dupmark_bam)))
+def rm_dup_se(dupmark_bam, nth, out_dir, prefix = "output"):
+    prefix = os.path.join(out_dir, prefix)
     # strip extension appended in the previous step
     prefix = strip_ext(prefix,'dupmark') 
     nodup_bam = '{}.nodup.bam'.format(prefix)
@@ -212,9 +209,8 @@ def rm_dup_se(dupmark_bam, nth, out_dir):
     run_shell_cmd(cmd1)
     return nodup_bam
 
-def rm_dup_pe(dupmark_bam, nth, out_dir):
-    prefix = os.path.join(out_dir,
-        os.path.basename(strip_ext_bam(dupmark_bam)))
+def rm_dup_pe(dupmark_bam, nth, out_dir, prefix = "output"):
+    prefix = os.path.join(out_dir, "output")
     # strip extension appended in the previous step
     prefix = strip_ext(prefix,'dupmark') 
     nodup_bam = '{}.nodup.bam'.format(prefix)
@@ -227,9 +223,8 @@ def rm_dup_pe(dupmark_bam, nth, out_dir):
     run_shell_cmd(cmd1)
     return nodup_bam
 
-def pbc_qc_se(bam, out_dir):
-    prefix = os.path.join(out_dir,
-        os.path.basename(strip_ext_bam(bam)))
+def pbc_qc_se(bam, out_dir, prefix = "output"):
+    prefix = os.path.join(out_dir, prefix)
     # strip extension appended in the previous step
     prefix = strip_ext(prefix,'dupmark') 
     pbc_qc = '{}.pbc.qc'.format(prefix)
@@ -248,9 +243,8 @@ def pbc_qc_se(bam, out_dir):
     run_shell_cmd(cmd2)
     return pbc_qc
 
-def pbc_qc_pe(bam, nth, out_dir):
-    prefix = os.path.join(out_dir,
-        os.path.basename(strip_ext_bam(bam)))
+def pbc_qc_pe(bam, nth, out_dir, prefix = "output"):
+    prefix = os.path.join(out_dir, prefix)
     pbc_qc = '{}.pbc.qc'.format(prefix)
 
     # nmsrt_bam = samtools_name_sort(bam, nth, out_dir)
@@ -274,8 +268,8 @@ def pbc_qc_pe(bam, nth, out_dir):
 # Cromwell/WDL wants to have a empty file 
 # for output { File pbc_qc, File dup_qc }
 
-def make_mito_dup_log(dupmark_bam, out_dir):
-    prefix = os.path.join(out_dir, os.path.basename(strip_ext_bam(dupmark_bam)))    
+def make_mito_dup_log(dupmark_bam, out_dir, prefix = "output"):
+    prefix = os.path.join(out_dir, prefix)    
     mito_dup_log = '{}.mito_dup.txt'.format(prefix)
     
     # Get the mitochondrial reads that are marked duplicates
@@ -306,11 +300,11 @@ def main():
     if args.paired_end:
         filt_bam = rm_unmapped_lowq_reads_pe(
                 args.bam, args.multimapping, args.mapq_thresh, 
-                args.nth, args.out_dir)
+                args.nth, args.out_dir, args.output_prefix)
     else:
         filt_bam = rm_unmapped_lowq_reads_se(
                 args.bam, args.multimapping, args.mapq_thresh, 
-                args.nth, args.out_dir)
+                args.nth, args.out_dir, args.output_prefix)
 
     if args.no_dup_removal:
         nodup_bam = filt_bam        
@@ -318,10 +312,10 @@ def main():
         log.info('Marking dupes with {}...'.format(args.dup_marker))
         if args.dup_marker=='picard':
             dupmark_bam, dup_qc = mark_dup_picard(
-                                filt_bam, args.out_dir)
+                                filt_bam, args.out_dir, args.output_prefix)
         elif args.dup_marker=='sambamba':
             dupmark_bam, dup_qc = mark_dup_sambamba(
-                                filt_bam, args.nth, args.out_dir)
+                                filt_bam, args.nth, args.out_dir, args.output_prefix)
         else:
             raise argparse.ArgumentTypeError(
             'Unsupported --dup-marker {}'.format(args.dup_marker))
@@ -330,10 +324,10 @@ def main():
         log.info('Removing dupes...')
         if args.paired_end:
             nodup_bam = rm_dup_pe(
-                        dupmark_bam, args.nth, args.out_dir)
+                        dupmark_bam, args.nth, args.out_dir, args.output_prefix)
         else:
             nodup_bam = rm_dup_se(
-                        dupmark_bam, args.nth, args.out_dir)
+                        dupmark_bam, args.nth, args.out_dir, args.output_prefix)
         samtools_index(dupmark_bam)
         temp_files.append(dupmark_bam)
         temp_files.append(dupmark_bam+'.bai')
@@ -352,10 +346,10 @@ def main():
     #                             (nodup_bam, args.out_dir))
     log.info('sambamba index...')
     ret_val_1 = pool.apply_async(sambamba_index, 
-                                (nodup_bam, args.nth, args.out_dir))
+                                (nodup_bam, args.nth, args.out_dir, args.output_prefix))
     log.info('sambamba flagstat...')
     ret_val_2 = pool.apply_async(sambamba_flagstat,
-                                (nodup_bam, args.nth, args.out_dir))
+                                (nodup_bam, args.nth, args.out_dir, args.output_prefix))
 
     log.info('Generating PBC QC log...')
     if not args.no_dup_removal:
@@ -363,10 +357,10 @@ def main():
             ret_val_3 = pool.apply_async(pbc_qc_pe,
                             (dupmark_bam,
                                 max(1,args.nth-2),
-                                args.out_dir))
+                                args.out_dir, args.output_prefix))
         else:
             ret_val_3 = pool.apply_async(pbc_qc_se,
-                            (dupmark_bam, args.out_dir))
+                            (dupmark_bam, args.out_dir, args.output_prefix))
             
     # gather
     nodup_bai = ret_val_1.get(BIG_INT)
@@ -376,7 +370,7 @@ def main():
         pbc_qc = ret_val_3.get(BIG_INT)
 
         log.info('Making mito dup log...')
-        mito_dup_log = make_mito_dup_log(dupmark_bam, args.out_dir)
+        mito_dup_log = make_mito_dup_log(dupmark_bam, args.out_dir, args.output_prefix)
 
     log.info('Closing multi-threading...')
     pool.close()
