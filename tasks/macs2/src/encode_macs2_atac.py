@@ -16,6 +16,8 @@ def parse_arguments():
                                         description='')
     parser.add_argument('ta', type=str,
                         help='Path for TAGALIGN file.')
+    parser.add_argument("--output-prefix", type = str, default = 'output',
+                        help = "output file name prefix; defaults to 'output'")
     parser.add_argument('--chrsz', type=str,
                         help='2-col chromosome sizes file.')
     parser.add_argument('--gensz', type=str, default = '',
@@ -51,9 +53,8 @@ def parse_arguments():
     return args
 
 def macs2(ta, chrsz, gensz, pval_thresh, smooth_win, cap_num_peak, 
-          make_signal, out_dir, paired_end = False):
-    prefix = os.path.join(out_dir,
-        os.path.basename(strip_ext_ta(ta)))
+          make_signal, out_dir, paired_end = False, prefix = "output"):
+    prefix = os.path.join(out_dir, prefix)
     npeak = '{}.{}.{}.narrowPeak.gz'.format(
         prefix,
         'pval{}'.format(pval_thresh),
@@ -213,7 +214,7 @@ def main():
     npeak, fc_bigwig, pval_bigwig = macs2(
         args.ta, args.chrsz, args.gensz, args.pval_thresh,
         args.smooth_win, args.cap_num_peak, args.make_signal, 
-        args.out_dir, args.paired_end)
+        args.out_dir, args.paired_end, args.output_prefix)
 
     log.info('Checking if output is empty...')
     assert_file_not_empty(npeak)
