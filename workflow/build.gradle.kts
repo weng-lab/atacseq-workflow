@@ -19,7 +19,7 @@ dependencies {
 }
 
 application {
-    mainClassName = "SampleWorkflowKt"
+    mainClassName = "atacseq.AtacseqWorkflowKt"
 }
 
 tasks.withType<KotlinCompile> {
