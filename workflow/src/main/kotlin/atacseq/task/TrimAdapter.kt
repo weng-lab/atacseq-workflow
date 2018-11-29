@@ -25,7 +25,7 @@ fun WorkflowBuilder.trimAdaptorTask(i: Publisher<TrimAdapterInput>) = this.task<
     input = i
 
     outputFn {
-        val prefix = "${inputEl.outDir()}/output"
+        val prefix = "trim/${inputEl.rep.name}"
         if (inputEl.rep is FastqReplicateSE) {
             val merged = MergedFastqReplicateSE(name = inputEl.rep.name, merged = OutputFile("$prefix.trim.fastq.gz"))
             TrimAdapterOutput(merged)
@@ -45,12 +45,12 @@ fun WorkflowBuilder.trimAdaptorTask(i: Publisher<TrimAdapterInput>) = this.task<
                 (rep is FastqReplicatePE && (rep.adaptorR1 == null || rep.adaptorR2 == null))
         """
         /app/encode_trim_adaptor.py \
-            --out-dir $dockerDataDir/${inputEl.outDir()} \
-            --out-prefix output \
+            --out-dir $dockerDataDir/trim \
+            --out-prefix ${inputEl.rep.name} \
             ${if (rep is FastqReplicateSE) "--fastqs ${rep.merges.joinToString(" ") { it.dockerPath }}" else ""} \
             ${if (rep is FastqReplicateSE && !detectAdaptor) "--adapter ${rep.adaptor!!.dockerPath}" else ""} \
-            ${if (rep is FastqReplicatePE) "--fastqs-r1 ${rep.mergesR1.joinToString(" ") { it.dockerPath }}" else ""} \
-            ${if (rep is FastqReplicatePE) "--fastqs-r2 ${rep.mergesR2.joinToString(" ") { it.dockerPath }}" else ""} \
+            ${if (rep is FastqReplicatePE) "--fastqs-r1 ${rep.fastqsR1.joinToString(" ") { it.dockerPath }}" else ""} \
+            ${if (rep is FastqReplicatePE) "--fastqs-r2 ${rep.fastqsR2.joinToString(" ") { it.dockerPath }}" else ""} \
             ${if (rep is FastqReplicatePE && !detectAdaptor) "--adapter-r1 ${rep.adaptorR1!!.dockerPath}" else ""} \
             ${if (rep is FastqReplicatePE && !detectAdaptor) "--adapter-r2 ${rep.adaptorR2!!.dockerPath}" else ""} \
             ${if (detectAdaptor) "--auto-detect-adapter" else ""} \
@@ -60,5 +60,3 @@ fun WorkflowBuilder.trimAdaptorTask(i: Publisher<TrimAdapterInput>) = this.task<
         """
     }
 }
-
-private fun TrimAdapterInput.outDir() = "replicates/${this.rep.name}/trim"

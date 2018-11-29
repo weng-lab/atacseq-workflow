@@ -35,7 +35,7 @@ fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>) = this.task<Macs2Input, 
     dockerImage = "genomealmanac/atacseq-bam2ta:1.0.0"
     input = i
     outputFn {
-        val prefix = "${inputEl.outDir()}/output"
+        val prefix = "macs2/${inputEl.repName}"
         Macs2Output(
                 npeak = OutputFile("$prefix.narrowPeak.gz"),
                 bfiltNpeak = OutputFile("$prefix.bfilt.narrowPeak.gz"),
@@ -51,8 +51,8 @@ fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>) = this.task<Macs2Input, 
         """
         /app/encode_macs2_atac.py \
             ${inputEl.ta.dockerPath} \
-            --out-dir $dockerDataDir/${inputEl.outDir()} \
-            --out-prefix output \
+            --out-dir $dockerDataDir/macs2 \
+            --out-prefix ${inputEl.repName} \
             ${if (params.gensz != null) "--genz ${params.gensz}" else ""} \
             --chrsz ${params.chrsz.dockerPath} \
             --cap-num-peak ${params.capNumPeak} \
@@ -64,5 +64,3 @@ fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>) = this.task<Macs2Input, 
         """
     }
 }
-
-private fun Macs2Input.outDir() = "replicates/${this.repName}/macs2"

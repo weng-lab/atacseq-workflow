@@ -31,7 +31,7 @@ fun WorkflowBuilder.bowtie2Task(i: Publisher<Bowtie2Input>) = this.task<Bowtie2I
     dockerImage = "genomealmanac/atacseq-bowtie2:1.0.0"
     input = i
     outputFn {
-        val prefix = "${inputEl.outDir()}/output"
+        val prefix = "bowtie2/${inputEl.mergedRep.name}"
         Bowtie2Output(
                 repName = inputEl.mergedRep.name,
                 pairedEnd = inputEl.mergedRep is MergedFastqReplicatePE,
@@ -47,8 +47,8 @@ fun WorkflowBuilder.bowtie2Task(i: Publisher<Bowtie2Input>) = this.task<Bowtie2I
         """
         /app/encode_bowtie2.py \
             ${inputEl.params.idxTar.dockerPath} \
-            --out-dir $dockerDataDir/${inputEl.outDir()} \
-            --out-prefix output
+            --out-dir $dockerDataDir/bowtie2 \
+            --out-prefix ${inputEl.mergedRep.name} \
             ${if (mergedRep is MergedFastqReplicateSE) "--fastq ${mergedRep.merged.dockerPath}" else ""} \
             ${if (mergedRep is MergedFastqReplicatePE) "--fastq-r1 ${mergedRep.mergedR1.dockerPath}" else ""} \
             ${if (mergedRep is MergedFastqReplicatePE) "--fastq-r2 ${mergedRep.mergedR2.dockerPath}" else ""} \
@@ -59,5 +59,3 @@ fun WorkflowBuilder.bowtie2Task(i: Publisher<Bowtie2Input>) = this.task<Bowtie2I
         """
     }
 }
-
-private fun Bowtie2Input.outDir() = "replicates/${this.mergedRep.name}/bowtie2"

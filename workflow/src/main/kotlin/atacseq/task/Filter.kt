@@ -38,7 +38,7 @@ fun WorkflowBuilder.filterTask(i: Publisher<FilterInput>) = this.task<FilterInpu
     dockerImage = "genomealmanac/atacseq-filter-alignment:1.0.0"
     input = i
     outputFn {
-        val prefix = "${inputEl.outDir()}/output"
+        val prefix = "filter/${inputEl.repName}"
         FilterOutput(
                 repName = inputEl.repName,
                 pairedEnd = inputEl.pairedEnd,
@@ -55,8 +55,8 @@ fun WorkflowBuilder.filterTask(i: Publisher<FilterInput>) = this.task<FilterInpu
         """
         /app/encode_filter.py \
             ${inputEl.bam.dockerPath} \
-            --out-dir $dockerDataDir/${inputEl.outDir()} \
-            --out-prefix output \
+            --out-dir $dockerDataDir/filter \
+            --out-prefix ${inputEl.repName} \
             ${if (inputEl.pairedEnd) "--paired-end" else ""} \
             --multimapping ${params.multimapping} \
             --dup-marker ${params.dupMarker.name.toLowerCase()} \
@@ -66,5 +66,3 @@ fun WorkflowBuilder.filterTask(i: Publisher<FilterInput>) = this.task<FilterInpu
         """
     }
 }
-
-private fun FilterInput.outDir() = "replicates/${this.repName}/filter"

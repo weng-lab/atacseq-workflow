@@ -2,12 +2,12 @@ package atacseq.model
 
 import krews.file.File
 
-interface FastqReplicates {
+interface FastqSamples {
     val replicates: List<FastqReplicate>
 }
 
-data class FastqReplicatesSE(override val replicates: List<FastqReplicateSE>) : FastqReplicates
-data class FastqReplicatesPE(override val replicates: List<FastqReplicatePE>) : FastqReplicates
+data class FastqSamplesSE(override val replicates: List<FastqReplicateSE>) : FastqSamples
+data class FastqSamplessPE(override val replicates: List<FastqReplicatePE>) : FastqSamples
 
 interface FastqReplicate {
     val name: String
@@ -16,8 +16,8 @@ interface FastqReplicate {
 data class FastqReplicateSE(override val name: String, val merges: List<File>, val adaptor: File? = null) : FastqReplicate
 data class FastqReplicatePE(
         override val name: String,
-        val mergesR1: List<File>,
-        val mergesR2: List<File>,
+        val fastqsR1: List<File>,
+        val fastqsR2: List<File>,
         val adaptorR1: File? = null,
         val adaptorR2: File? = null
 ) : FastqReplicate

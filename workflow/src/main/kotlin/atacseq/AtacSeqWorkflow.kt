@@ -1,6 +1,6 @@
 package atacseq
 
-import atacseq.model.*
+import atacseq.model.FastqSamples
 import atacseq.task.*
 import krews.core.workflow
 import krews.run
@@ -9,7 +9,7 @@ import reactor.core.publisher.toFlux
 fun main(args: Array<String>) = run(atacSeqWorkflow, args)
 
 data class AtacSeqParams(
-        val fastqs: FastqReplicates,
+        val samples: FastqSamples,
         val trimAdaptor: TrimAdapterParams,
         val bowtie2: Bowtie2Params,
         val filter: FilterParams,
@@ -20,7 +20,7 @@ data class AtacSeqParams(
 val atacSeqWorkflow = workflow("atac-seq-workflow") {
     val params = params<AtacSeqParams>()
 
-    val trimAdaptorInputs = params.fastqs.replicates
+    val trimAdaptorInputs = params.samples.replicates
             .map { TrimAdapterInput(it, params.trimAdaptor) }
             .toFlux()
     val trimAdaptorTask = trimAdaptorTask(trimAdaptorInputs)
