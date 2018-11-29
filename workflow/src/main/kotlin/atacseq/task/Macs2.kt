@@ -35,14 +35,15 @@ fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>) = this.task<Macs2Input, 
     dockerImage = "genomealmanac/atacseq-bam2ta:1.0.0"
     input = i
     outputFn {
+        val prefix = "${inputEl.outDir()}/output"
         Macs2Output(
-                npeak = OutputFile(""),
-                bfiltNpeak = OutputFile(""),
-                bfiltNpeakBB = OutputFile(""),
-                bfiltNpeakHammock = OutputFile(""),
-                sigPval = if (inputEl.params.makeSignal) OutputFile("") else null,
-                sigFc = if (inputEl.params.makeSignal) OutputFile("") else null,
-                fripQc = OutputFile("")
+                npeak = OutputFile("$prefix.narrowPeak.gz"),
+                bfiltNpeak = OutputFile("$prefix.bfilt.narrowPeak.gz"),
+                bfiltNpeakBB = OutputFile("$prefix.bfilt.narrowPeak.bb"),
+                bfiltNpeakHammock = OutputFile("$prefix.bfilt.narrowPeak.hammock.gz"),
+                sigPval = if (inputEl.params.makeSignal) OutputFile("$prefix.pval.signal.bigwig") else null,
+                sigFc = if (inputEl.params.makeSignal) OutputFile("$prefix.fc.signal.bigwig") else null,
+                fripQc = OutputFile("$prefix.frip.qc")
         )
     }
     commandFn {
