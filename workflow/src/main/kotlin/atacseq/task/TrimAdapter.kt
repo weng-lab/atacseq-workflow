@@ -21,7 +21,7 @@ data class TrimAdapterOutput(
 )
 
 fun WorkflowBuilder.trimAdapterTask(i: Publisher<TrimAdapterInput>) = this.task<TrimAdapterInput, TrimAdapterOutput>("trim-adapter") {
-    dockerImage = "genomealmanac/atacseq-trim-adapters:1.0.1"
+    dockerImage = "genomealmanac/atacseq-trim-adapters:1.0.2"
     input = i
 
     outputFn {

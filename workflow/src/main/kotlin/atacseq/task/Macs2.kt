@@ -33,7 +33,7 @@ data class Macs2Output(
 )
 
 fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>) = this.task<Macs2Input, Macs2Output>("macs2") {
-    dockerImage = "genomealmanac/atacseq-bam2ta:1.0.0"
+    dockerImage = "genomealmanac/atacseq-bam2ta:1.0.2"
     input = i
     outputFn {
         val prefix = "macs2/${inputEl.repName}"
