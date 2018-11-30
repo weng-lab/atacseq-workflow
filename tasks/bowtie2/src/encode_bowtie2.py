@@ -22,12 +22,12 @@ def parse_arguments():
                             Tar ball must be packed without compression \
                             and directory by using command line \
                             "tar cvf [TAR] [TAR_PREFIX].*.bt2".')
-    parser.add_argument('--fastq', type=str,
+    parser.add_argument('--fastq', type=str, default = "",
                         help='input FASTQ (single end only; for paired-end, use --fastq-r1 and --fastq-r2). \
                         FASTQ must be compressed with gzip (with .gz).')
-    parser.add_argument('--fastq-r1', type=str,
+    parser.add_argument('--fastq-r1', type=str, default = "",
                         help='End 1 FASTQ for a paired-end experiment.')
-    parser.add_argument('--fastq-r2', type=str,
+    parser.add_argument('--fastq-r2', type=str, default = "",
                         help='End 2 FASTQ for a paired-end experiment.')
     parser.add_argument('--score-min', default='', type=str,
                         help='--score-min for bowtie2.')
@@ -46,9 +46,9 @@ def parse_arguments():
     args = parser.parse_args()
 
     # check if fastqs have correct dimension
-    if args.paired_end and (len(args.fastq_r1) != 1 or len(args.fastq_r2) != 1):
+    if args.paired_end and (args.fastq_r1 == "" or len(args.fastq_r2) == ""):
         raise argparse.ArgumentTypeError('If --paired-end is set, --fastq-r1 and --fastq-r2 must be used.')
-    if not args.paired_end and len(args.fastq) != 1:
+    if not args.paired_end and args.fastq == "":
         raise argparse.ArgumentTypeError('If --paired-end is not set (single end), --fastq must be used.')
 
     log.setLevel(args.log_level)
