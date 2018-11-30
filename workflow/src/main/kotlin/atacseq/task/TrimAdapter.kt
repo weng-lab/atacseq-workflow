@@ -20,7 +20,7 @@ data class TrimAdapterOutput(
         val mergedReplicate: MergedFastqReplicate
 )
 
-fun WorkflowBuilder.trimAdaptorTask(i: Publisher<TrimAdapterInput>) = this.task<TrimAdapterInput, TrimAdapterOutput>("trim-adaptor") {
+fun WorkflowBuilder.trimAdapterTask(i: Publisher<TrimAdapterInput>) = this.task<TrimAdapterInput, TrimAdapterOutput>("trim-adapter") {
     dockerImage = "genomealmanac/atacseq-trim-adapters:1.0.1"
     input = i
 
@@ -44,10 +44,10 @@ fun WorkflowBuilder.trimAdaptorTask(i: Publisher<TrimAdapterInput>) = this.task<
         val detectAdaptor = (rep is FastqReplicateSE && rep.adaptor == null) ||
                 (rep is FastqReplicatePE && (rep.adaptorR1 == null || rep.adaptorR2 == null))
         """
-        /app/encode_trim_adaptor.py \
+        /app/encode_trim_adapter.py \
             --out-dir $dockerDataDir/trim \
             --out-prefix ${inputEl.rep.name} \
-            ${if (rep is FastqReplicateSE) "--fastqs ${rep.merges.joinToString(" ") { it.dockerPath }}" else ""} \
+            ${if (rep is FastqReplicateSE) "--fastqs ${rep.fastqs.joinToString(" ") { it.dockerPath }}" else ""} \
             ${if (rep is FastqReplicateSE && !detectAdaptor) "--adapter ${rep.adaptor!!.dockerPath}" else ""} \
             ${if (rep is FastqReplicatePE) "--fastqs-r1 ${rep.fastqsR1.joinToString(" ") { it.dockerPath }}" else ""} \
             ${if (rep is FastqReplicatePE) "--fastqs-r2 ${rep.fastqsR2.joinToString(" ") { it.dockerPath }}" else ""} \

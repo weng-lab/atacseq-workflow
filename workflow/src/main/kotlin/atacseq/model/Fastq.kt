@@ -13,7 +13,7 @@ interface FastqReplicate {
     val name: String
 }
 
-data class FastqReplicateSE(override val name: String, val merges: List<File>, val adaptor: File? = null) : FastqReplicate
+data class FastqReplicateSE(override val name: String, val fastqs: List<File>, val adaptor: File? = null) : FastqReplicate
 data class FastqReplicatePE(
         override val name: String,
         val fastqsR1: List<File>,

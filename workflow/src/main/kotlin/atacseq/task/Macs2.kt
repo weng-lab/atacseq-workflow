@@ -11,7 +11,8 @@ data class Macs2Params(
         val capNumPeak: Int = 300_000,
         val pvalThresh: Double = 0.01,
         val smoothWin: Int = 150,
-        val makeSignal: Boolean = true
+        val makeSignal: Boolean = true,
+        @CacheIgnored val numThreads: Int = 1
 )
 
 data class Macs2Input(
@@ -59,8 +60,9 @@ fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>) = this.task<Macs2Input, 
             --pval-thresh ${params.pvalThresh} \
             --smooth-win ${params.smoothWin} \
             --blacklist ${params.blacklist.dockerPath} \
-            ${if (params.makeSignal) "--make-signal" else "" }
-            ${if (inputEl.pairedEnd) "--paired-end" else "" }
+            ${if (params.makeSignal) "--make-signal" else "" } \
+            ${if (inputEl.pairedEnd) "--paired-end" else "" } \
+            --nth ${inputEl.params.numThreads}
         """
     }
 }
