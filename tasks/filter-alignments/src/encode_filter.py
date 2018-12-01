@@ -346,10 +346,10 @@ def main():
     #                             (nodup_bam, args.out_dir))
     log.info('sambamba index...')
     ret_val_1 = pool.apply_async(sambamba_index, 
-                                (nodup_bam, args.nth, args.out_dir, args.output_prefix))
+                                (nodup_bam, args.nth, args.out_dir))
     log.info('sambamba flagstat...')
     ret_val_2 = pool.apply_async(sambamba_flagstat,
-                                (nodup_bam, args.nth, args.out_dir, args.output_prefix))
+                                (nodup_bam, args.nth, args.out_dir))
 
     log.info('Generating PBC QC log...')
     if not args.no_dup_removal:
