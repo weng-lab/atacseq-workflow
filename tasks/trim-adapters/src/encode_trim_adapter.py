@@ -50,14 +50,14 @@ def parse_arguments(debug=False):
 
     # parse fastqs command line
     if args.paired_end:
-        if (len(args.fastqs_r1) == 0 or len(args.fastqs_r2) == 0):
+        if (args.fastqs_r1 is None or args.fastqs_r2 is None or len(args.fastqs_r1) == 0 or len(args.fastqs_r2) == 0):
             raise Exception("if --paired-end is set, --fastqs-r1 and --fastqs-r2 must both have at least one file")
         if len(args.fastqs_r1) != len(args.fastqs_r2):
             raise Exception("the same number of read 1 and read 2 input fastqs must be provided (got %d for --fastqs-r1, %d for --fastqs-r2)"
                             % (len(args.fastqs_r1), len(args.fastqs_r2)) )
         args.fastqs = [ [ args.fastqs_r1[i], args.fastqs_r2[i] ] for i, _ in enumerate(args.fastqs_r1) ]
     else:
-        if len(args.fastqs) == 0:
+        if args.fastqs is None or len(args.fastqs) == 0:
             raise Exception("if --paired-end is not set, --fastqs must have at least one file")
         args.fastqs = [ [x] for x in args.fastqs ]
 
@@ -94,9 +94,9 @@ def parse_arguments(debug=False):
     log.info(sys.argv)
     return args
 
-def trim_adapter_se(fastq, adapter, min_trim_len, err_rate, out_dir, prefix = "output"):
+def trim_adapter_se(fastq, adapter, min_trim_len, err_rate, out_dir):
     if adapter:
-        prefix = os.path.join(out_dir, prefix)
+        prefix = os.path.join(out_dir, os.path.basename(fastq))
         trimmed = '{}.trim.fastq.gz'.format(prefix)
 
         cmd = 'cutadapt {} -e {} -a {} {} | gzip -nc > {}'.format(
@@ -112,14 +112,14 @@ def trim_adapter_se(fastq, adapter, min_trim_len, err_rate, out_dir, prefix = "o
             os.path.basename(fastq))
         if fastq == linked:
             return linked
-        os.system("mv %s %s" % (fastq, linked))
+        os.system("cp %s %s" % (fastq, linked))
         return linked
 
 def trim_adapter_pe(fastq1, fastq2, adapter1, adapter2,
-                    min_trim_len, err_rate, out_dir, prefix = "output"):
+                    min_trim_len, err_rate, out_dir):
     if adapter1 and adapter2:
-        prefix1 = os.path.join(out_dir, prefix + ".R1")
-        prefix2 = os.path.join(out_dir, prefix + ".R2")
+        prefix1 = os.path.join(out_dir, os.path.basename(fastq1) + ".R1")
+        prefix2 = os.path.join(out_dir, os.path.basename(fastq2) + ".R2")
         trimmed1 = '{}.trim.fastq.gz'.format(prefix1)
         trimmed2 = '{}.trim.fastq.gz'.format(prefix2)
 
@@ -137,9 +137,9 @@ def trim_adapter_pe(fastq1, fastq2, adapter1, adapter2,
         linked2 = os.path.join(out_dir,
             os.path.basename(fastq2))
         if linked1 != fastq1:
-            os.system("mv %s %s" % (fastq1, linked1))
+            os.system("cp %s %s" % (fastq1, linked1))
         if linked2 != fastq2:
-            os.system("mv %s %s" % (fastq2, linked2))
+            os.system("cp %s %s" % (fastq2, linked2))
         return [linked1, linked2]
 
 # WDL glob() globs in an alphabetical order
@@ -149,7 +149,7 @@ def trim_adapter_pe(fastq1, fastq2, adapter1, adapter2,
 # to the basename of original filename
 def merge_fastqs(fastqs, end, out_dir, prefix = "output"):
     basename = os.path.basename(strip_ext_fastq(fastqs[0]))
-    prefix = os.path.join(out_dir, prefix + '.' + end)
+    prefix = os.path.join(out_dir, prefix + ('.' + end if end != "" else ""))
     merged = '{}.merged.fastq.gz'.format(prefix)
 
     if len(fastqs)>1:
@@ -222,8 +222,7 @@ def main():
                     adapters[0], adapters[1],
                     args.min_trim_len,
                     args.err_rate,
-                    args.out_dir,
-                    args.output_prefix))
+                    args.out_dir))
         else:
             ret_val = pool.apply_async(
                 trim_adapter_se,(
@@ -231,8 +230,7 @@ def main():
                     adapters[0],
                     args.min_trim_len,
                     args.err_rate,
-                    args.out_dir,
-                    args.output_prefix))
+                    args.out_dir))
         ret_vals.append(ret_val)
 
     # update array with trimmed fastqs
@@ -249,12 +247,15 @@ def main():
 
     log.info('Merging fastqs...')
     log.info('R1 to be merged: {}'.format(trimmed_fastqs_R1))
-    ret_val1 = pool.apply_async(merge_fastqs,
-                    (trimmed_fastqs_R1, 'R1', args.out_dir, args.output_prefix,))
     if args.paired_end:
         log.info('R2 to be merged: {}'.format(trimmed_fastqs_R2))
         ret_val2 = pool.apply_async(merge_fastqs,
                         (trimmed_fastqs_R2, 'R2', args.out_dir, args.output_prefix,))
+        ret_val1 = pool.apply_async(merge_fastqs,
+                        (trimmed_fastqs_R1, 'R1', args.out_dir, args.output_prefix,))
+    else:
+        ret_val1 = pool.apply_async(merge_fastqs,
+                        (trimmed_fastqs_R1, "", args.out_dir, args.output_prefix,))
     # gather
     R1_merged = ret_val1.get(BIG_INT)
     if args.paired_end:
