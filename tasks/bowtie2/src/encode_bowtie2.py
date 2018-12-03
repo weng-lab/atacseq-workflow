@@ -137,11 +137,14 @@ def main():
 
     # generate read length file
     log.info('Generating read length file...')
-    R1_read_length_file = make_read_length_file(
-                            args.fastq_r1, args.out_dir, args.output_prefix)
     if args.paired_end:
+        R1_read_length_file = make_read_length_file(
+                            args.fastq_r1, args.out_dir, args.output_prefix)
         R2_read_length_file = make_read_length_file(
                             args.fastq_r2, args.out_dir, args.output_prefix)
+    else:
+        R1_read_length_file = make_read_length_file(
+                            args.fastq, args.out_dir, args.output_prefix)
     
     # if bowtie2 index is tarball then unpack it
     if args.bowtie2_index_prefix_or_tar.endswith('.tar'):
