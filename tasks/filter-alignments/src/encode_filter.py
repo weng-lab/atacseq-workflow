@@ -50,7 +50,7 @@ def rm_unmapped_lowq_reads_se(bam, multimapping, mapq_thresh, nth, out_dir, pref
         qname_sort_bam = sambamba_name_sort(bam, nth, out_dir)
 
         cmd2 = 'samtools view -h {} | '
-        cmd2 += '$(which assign_multimappers.py) -k {} | '
+        cmd2 += '/app/assign_multimappers.py -k {} | '
         cmd2 += 'samtools view -F 1804 -Su /dev/stdin | '
 
         # cmd2 += 'samtools sort /dev/stdin -o {} -T {} -@ {}'
@@ -105,7 +105,7 @@ def rm_unmapped_lowq_reads_pe(bam, multimapping, mapq_thresh, nth, out_dir, pref
         run_shell_cmd(cmd1)
 
         cmd2 = 'samtools view -h {} -@ {} | '
-        cmd2 += '$(which assign_multimappers.py) -k {} --paired-end | '
+        cmd2 += '/app/assign_multimappers.py -k {} --paired-end | '
         cmd2 += 'samtools fixmate -r /dev/stdin {}'
         cmd2 = cmd2.format(
             tmp_filt_bam,
