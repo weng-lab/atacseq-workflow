@@ -34,7 +34,7 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
     val filterTask = filterTask(filterInput)
 
     val bam2taInput = filterTask.output
-            .map { Bam2taInput(it.noDupBam, it.repName, it.pairedEnd, params.bam2ta) }
+            .map { Bam2taInput(it.bam, it.repName, it.pairedEnd, params.bam2ta) }
     val bam2taTask = bam2taTask(bam2taInput)
 
     val macs2Input = bam2taTask.output

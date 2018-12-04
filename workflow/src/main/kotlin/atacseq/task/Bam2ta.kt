@@ -29,7 +29,7 @@ fun WorkflowBuilder.bam2taTask(i: Publisher<Bam2taInput>) = this.task<Bam2taInpu
     input = i
     outputFn {
         Bam2taOutput(
-                ta = OutputFile("bam2ta/${inputEl.repName}.tagAlign.gz"),
+                ta = OutputFile("bam2ta/${inputEl.repName}.tn5.tagAlign.gz"),
                 repName = inputEl.repName,
                 pairedEnd = inputEl.pairedEnd
         )
@@ -40,7 +40,7 @@ fun WorkflowBuilder.bam2taTask(i: Publisher<Bam2taInput>) = this.task<Bam2taInpu
         /app/encode_bam2ta.py \
             ${inputEl.bam.dockerPath} \
             --out-dir $dockerDataDir/bam2ta \
-            --out-prefix ${inputEl.repName} \
+            --output-prefix ${inputEl.repName} \
             ${if (inputEl.pairedEnd) "--paired-end" else ""} \
             ${if (params.disableTn5Shift) "--disable-tn5-shift" else ""} \
             --regex-grep-v-ta ${params.regexGrepVTA} \

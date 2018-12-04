@@ -11,8 +11,7 @@ data class Macs2Params(
         val capNumPeak: Int = 300_000,
         val pvalThresh: Double = 0.01,
         val smoothWin: Int = 150,
-        val makeSignal: Boolean = true,
-        @CacheIgnored val numThreads: Int = 1
+        val makeSignal: Boolean = true
 )
 
 data class Macs2Input(
@@ -26,25 +25,25 @@ data class Macs2Output(
     val npeak: File,
     val bfiltNpeak: File,
     val bfiltNpeakBB: File,
-    val bfiltNpeakHammock: File,
     val sigPval: File?,
     val sigFc: File?,
     val fripQc: File
 )
 
 fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>) = this.task<Macs2Input, Macs2Output>("macs2") {
-    dockerImage = "genomealmanac/atacseq-bam2ta:1.0.2"
+    dockerImage = "genomealmanac/atacseq-macs2:1.0.2"
     input = i
     outputFn {
+        val params = inputEl.params
         val prefix = "macs2/${inputEl.repName}"
+        val npPrefix = "$prefix.pval${params.pvalThresh}.${capNumPeakFilePrefix(params.capNumPeak)}"
         Macs2Output(
-                npeak = OutputFile("$prefix.narrowPeak.gz"),
-                bfiltNpeak = OutputFile("$prefix.bfilt.narrowPeak.gz"),
-                bfiltNpeakBB = OutputFile("$prefix.bfilt.narrowPeak.bb"),
-                bfiltNpeakHammock = OutputFile("$prefix.bfilt.narrowPeak.hammock.gz"),
-                sigPval = if (inputEl.params.makeSignal) OutputFile("$prefix.pval.signal.bigwig") else null,
-                sigFc = if (inputEl.params.makeSignal) OutputFile("$prefix.fc.signal.bigwig") else null,
-                fripQc = OutputFile("$prefix.frip.qc")
+                npeak = OutputFile("$npPrefix.narrowPeak.gz"),
+                bfiltNpeak = OutputFile("$npPrefix.bfilt.narrowPeak.gz"),
+                bfiltNpeakBB = OutputFile("$npPrefix.bfilt.narrowPeak.bb"),
+                fripQc = OutputFile("$npPrefix.bfilt.frip.qc"),
+                sigPval = if (params.makeSignal) OutputFile("$prefix.pval.signal.bigwig") else null,
+                sigFc = if (params.makeSignal) OutputFile("$prefix.fc.signal.bigwig") else null
         )
     }
     commandFn {
@@ -53,16 +52,26 @@ fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>) = this.task<Macs2Input, 
         /app/encode_macs2_atac.py \
             ${inputEl.ta.dockerPath} \
             --out-dir $dockerDataDir/macs2 \
-            --out-prefix ${inputEl.repName} \
-            ${if (params.gensz != null) "--genz ${params.gensz}" else ""} \
+            --output-prefix ${inputEl.repName} \
+            ${if (params.gensz != null) "--gensz ${params.gensz}" else ""} \
             --chrsz ${params.chrsz.dockerPath} \
             --cap-num-peak ${params.capNumPeak} \
             --pval-thresh ${params.pvalThresh} \
             --smooth-win ${params.smoothWin} \
             --blacklist ${params.blacklist.dockerPath} \
             ${if (params.makeSignal) "--make-signal" else "" } \
-            ${if (inputEl.pairedEnd) "--paired-end" else "" } \
-            --nth ${inputEl.params.numThreads}
+            ${if (inputEl.pairedEnd) "--paired-end" else "" }
         """
     }
+}
+
+private fun capNumPeakFilePrefix(capNumPeak: Int): String {
+    var displayVal = capNumPeak
+    var displayUnit = ""
+    for (unit in listOf("K", "M", "G", "T", "P", "E")) {
+        if (displayVal < 1000) break
+        displayVal /= 1000
+        displayUnit = unit
+    }
+    return "$displayVal$displayUnit"
 }

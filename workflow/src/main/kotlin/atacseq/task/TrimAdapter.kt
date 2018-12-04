@@ -21,19 +21,19 @@ data class TrimAdapterOutput(
 )
 
 fun WorkflowBuilder.trimAdapterTask(i: Publisher<TrimAdapterInput>) = this.task<TrimAdapterInput, TrimAdapterOutput>("trim-adapter") {
-    dockerImage = "genomealmanac/atacseq-trim-adapters:1.0.2"
+    dockerImage = "genomealmanac/atacseq-trim-adapters:1.0.3"
     input = i
 
     outputFn {
         val prefix = "trim/${inputEl.rep.name}"
         if (inputEl.rep is FastqReplicateSE) {
-            val merged = MergedFastqReplicateSE(name = inputEl.rep.name, merged = OutputFile("$prefix.trim.fastq.gz"))
+            val merged = MergedFastqReplicateSE(name = inputEl.rep.name, merged = OutputFile("$prefix.merged.fastq.gz"))
             TrimAdapterOutput(merged)
         } else {
             val merged = MergedFastqReplicatePE(
                     name = inputEl.rep.name,
-                    mergedR1 = OutputFile("$prefix.R1.trim.fastq.gz"),
-                    mergedR2 = OutputFile("$prefix.R2.trim.fastq.gz")
+                    mergedR1 = OutputFile("$prefix.R1.merged.fastq.gz"),
+                    mergedR2 = OutputFile("$prefix.R2.merged.fastq.gz")
             )
             TrimAdapterOutput(merged)
         }
@@ -46,7 +46,7 @@ fun WorkflowBuilder.trimAdapterTask(i: Publisher<TrimAdapterInput>) = this.task<
         """
         /app/encode_trim_adapter.py \
             --out-dir $dockerDataDir/trim \
-            --out-prefix ${inputEl.rep.name} \
+            --output-prefix ${inputEl.rep.name} \
             ${if (rep is FastqReplicateSE) "--fastqs ${rep.fastqs.joinToString(" ") { it.dockerPath }}" else ""} \
             ${if (rep is FastqReplicateSE && !detectAdaptor) "--adapter ${rep.adaptor!!.dockerPath}" else ""} \
             ${if (rep is FastqReplicatePE) "--fastqs-r1 ${rep.fastqsR1.joinToString(" ") { it.dockerPath }}" else ""} \

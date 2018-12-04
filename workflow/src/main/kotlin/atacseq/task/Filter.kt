@@ -26,28 +26,29 @@ data class FilterInput(
 data class FilterOutput(
         val repName: String,
         val pairedEnd: Boolean,
-        val noDupBam: File,
-        val noDupBai: File,
+        val bam: File,
+        val bai: File,
         val flagstateQC: File,
         val dupQC: File?,
         val pbcQC: File?,
         val mitoDupLog: File?
 )
 
-fun WorkflowBuilder.filterTask(i: Publisher<FilterInput>) = this.task<FilterInput, FilterOutput>("filter-alignment") {
-    dockerImage = "genomealmanac/atacseq-filter-alignment:1.0.2"
+fun WorkflowBuilder.filterTask(i: Publisher<FilterInput>) = this.task<FilterInput, FilterOutput>("filter-alignments") {
+    dockerImage = "genomealmanac/atacseq-filter-alignments:1.0.3"
     input = i
     outputFn {
         val prefix = "filter/${inputEl.repName}"
+        val noDupRemoval = inputEl.params.noDupRemoval
         FilterOutput(
                 repName = inputEl.repName,
                 pairedEnd = inputEl.pairedEnd,
-                noDupBam = OutputFile("$prefix.bam"),
-                noDupBai = OutputFile("$prefix.bai"),
-                flagstateQC = OutputFile("$prefix.flagstat.qc"),
-                dupQC = if (inputEl.params.noDupRemoval) null else OutputFile("$prefix.dup.qc"),
-                pbcQC = if (inputEl.params.noDupRemoval) null else OutputFile("$prefix.pbc.qc"),
-                mitoDupLog = if (inputEl.params.noDupRemoval) null else OutputFile("$prefix.mito_dup.txt")
+                bam = if (noDupRemoval) OutputFile("$prefix.filt.bam") else OutputFile("$prefix.nodup.bam"),
+                bai = if (noDupRemoval) OutputFile("$prefix.filt.bam.bai") else OutputFile("$prefix.nodup.bam.bai"),
+                flagstateQC = if (noDupRemoval) OutputFile("$prefix.filt.flagstat.qc") else OutputFile("$prefix.nodup.flagstat.qc"),
+                dupQC = if (noDupRemoval) null else OutputFile("$prefix.dup.qc"),
+                pbcQC = if (noDupRemoval) null else OutputFile("$prefix.pbc.qc"),
+                mitoDupLog = if (noDupRemoval) null else OutputFile("$prefix.mito_dup.txt")
         )
     }
     commandFn {
@@ -56,7 +57,7 @@ fun WorkflowBuilder.filterTask(i: Publisher<FilterInput>) = this.task<FilterInpu
         /app/encode_filter.py \
             ${inputEl.bam.dockerPath} \
             --out-dir $dockerDataDir/filter \
-            --out-prefix ${inputEl.repName} \
+            --output-prefix ${inputEl.repName} \
             ${if (inputEl.pairedEnd) "--paired-end" else ""} \
             --multimapping ${params.multimapping} \
             --dup-marker ${params.dupMarker.name.toLowerCase()} \
