@@ -19,8 +19,7 @@ data class FilterParams(
 data class FilterInput(
         val bam: File,
         val repName: String,
-        val pairedEnd: Boolean,
-        val params: FilterParams
+        val pairedEnd: Boolean
 )
 
 data class FilterOutput(
@@ -34,15 +33,17 @@ data class FilterOutput(
         val mitoDupLog: File?
 )
 
-fun WorkflowBuilder.filterTask(i: Publisher<FilterInput>) = this.task<FilterInput, FilterOutput>("filter-alignments") {
+fun WorkflowBuilder.filterTask(i: Publisher<FilterInput>) = this.task<FilterInput, FilterOutput>("filter-alignments", i) {
+    val params = taskParams<FilterParams>()
+
     dockerImage = "genomealmanac/atacseq-filter-alignments:1.0.3"
-    input = i
-    outputFn {
-        val prefix = "filter/${inputEl.repName}"
-        val noDupRemoval = inputEl.params.noDupRemoval
+
+    val prefix = "filter/${input.repName}"
+    val noDupRemoval = params.noDupRemoval
+    output =
         FilterOutput(
-                repName = inputEl.repName,
-                pairedEnd = inputEl.pairedEnd,
+                repName = input.repName,
+                pairedEnd = input.pairedEnd,
                 bam = if (noDupRemoval) OutputFile("$prefix.filt.bam") else OutputFile("$prefix.nodup.bam"),
                 bai = if (noDupRemoval) OutputFile("$prefix.filt.bam.bai") else OutputFile("$prefix.nodup.bam.bai"),
                 flagstateQC = if (noDupRemoval) OutputFile("$prefix.filt.flagstat.qc") else OutputFile("$prefix.nodup.flagstat.qc"),
@@ -50,20 +51,18 @@ fun WorkflowBuilder.filterTask(i: Publisher<FilterInput>) = this.task<FilterInpu
                 pbcQC = if (noDupRemoval) null else OutputFile("$prefix.pbc.qc"),
                 mitoDupLog = if (noDupRemoval) null else OutputFile("$prefix.mito_dup.txt")
         )
-    }
-    commandFn {
-        val params = inputEl.params
+
+    command =
         """
         /app/encode_filter.py \
-            ${inputEl.bam.dockerPath} \
+            ${input.bam.dockerPath} \
             --out-dir $dockerDataDir/filter \
-            --output-prefix ${inputEl.repName} \
-            ${if (inputEl.pairedEnd) "--paired-end" else ""} \
+            --output-prefix ${input.repName} \
+            ${if (input.pairedEnd) "--paired-end" else ""} \
             --multimapping ${params.multimapping} \
             --dup-marker ${params.dupMarker.name.toLowerCase()} \
             --mapq-thresh ${params.mapqThresh} \
             ${if (params.noDupRemoval) "--no-dup-removal" else ""} \
             --nth ${params.numThreads}
         """
-    }
 }

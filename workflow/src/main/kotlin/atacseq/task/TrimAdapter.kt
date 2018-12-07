@@ -12,51 +12,48 @@ data class TrimAdapterParams(
 )
 
 data class TrimAdapterInput(
-        val rep: FastqReplicate,
-        val params: TrimAdapterParams
+        val rep: FastqReplicate
 )
 
 data class TrimAdapterOutput(
         val mergedReplicate: MergedFastqReplicate
 )
 
-fun WorkflowBuilder.trimAdapterTask(i: Publisher<TrimAdapterInput>) = this.task<TrimAdapterInput, TrimAdapterOutput>("trim-adapter") {
+fun WorkflowBuilder.trimAdapterTask(i: Publisher<TrimAdapterInput>) = this.task<TrimAdapterInput, TrimAdapterOutput>("trim-adapter", i) {
+    val params = taskParams<TrimAdapterParams>()
+
     dockerImage = "genomealmanac/atacseq-trim-adapters:1.0.3"
-    input = i
 
-    outputFn {
-        val prefix = "trim/${inputEl.rep.name}"
-        if (inputEl.rep is FastqReplicateSE) {
-            val merged = MergedFastqReplicateSE(name = inputEl.rep.name, merged = OutputFile("$prefix.merged.fastq.gz"))
-            TrimAdapterOutput(merged)
-        } else {
-            val merged = MergedFastqReplicatePE(
-                    name = inputEl.rep.name,
-                    mergedR1 = OutputFile("$prefix.R1.merged.fastq.gz"),
-                    mergedR2 = OutputFile("$prefix.R2.merged.fastq.gz")
-            )
-            TrimAdapterOutput(merged)
-        }
-    }
+    val rep = input.rep
+    output =
+            if (input.rep is FastqReplicateSE) {
+                val merged = MergedFastqReplicateSE(name = rep.name, merged = OutputFile("trim/${rep.name}.merged.fastq.gz"))
+                TrimAdapterOutput(merged)
+            } else {
+                val merged = MergedFastqReplicatePE(
+                        name = rep.name,
+                        mergedR1 = OutputFile("trim/${rep.name}.R1.merged.fastq.gz"),
+                        mergedR2 = OutputFile("trim/${rep.name}.R2.merged.fastq.gz")
+                )
+                TrimAdapterOutput(merged)
+            }
 
-    commandFn {
-        val rep = inputEl.rep
-        val detectAdaptor = (rep is FastqReplicateSE && rep.adaptor == null) ||
-                (rep is FastqReplicatePE && (rep.adaptorR1 == null || rep.adaptorR2 == null))
-        """
-        /app/encode_trim_adapter.py \
-            --out-dir $dockerDataDir/trim \
-            --output-prefix ${inputEl.rep.name} \
-            ${if (rep is FastqReplicateSE) "--fastqs ${rep.fastqs.joinToString(" ") { it.dockerPath }}" else ""} \
-            ${if (rep is FastqReplicateSE && !detectAdaptor) "--adapter ${rep.adaptor!!.dockerPath}" else ""} \
-            ${if (rep is FastqReplicatePE) "--fastqs-r1 ${rep.fastqsR1.joinToString(" ") { it.dockerPath }}" else ""} \
-            ${if (rep is FastqReplicatePE) "--fastqs-r2 ${rep.fastqsR2.joinToString(" ") { it.dockerPath }}" else ""} \
-            ${if (rep is FastqReplicatePE && !detectAdaptor) "--adapter-r1 ${rep.adaptorR1!!.dockerPath}" else ""} \
-            ${if (rep is FastqReplicatePE && !detectAdaptor) "--adapter-r2 ${rep.adaptorR2!!.dockerPath}" else ""} \
-            ${if (detectAdaptor) "--auto-detect-adapter" else ""} \
-            --min-trim-len ${inputEl.params.minTrimLen} \
-            --err-rate ${inputEl.params.errRate} \
-            --nth ${inputEl.params.numThreads}
-        """
-    }
+    val detectAdaptor = (rep is FastqReplicateSE && rep.adaptor == null) ||
+            (rep is FastqReplicatePE && (rep.adaptorR1 == null || rep.adaptorR2 == null))
+    command =
+            """
+            /app/encode_trim_adapter.py \
+                --out-dir $dockerDataDir/trim \
+                --output-prefix ${rep.name} \
+                ${if (rep is FastqReplicateSE) "--fastqs ${rep.fastqs.joinToString(" ") { it.dockerPath }}" else ""} \
+                ${if (rep is FastqReplicateSE && !detectAdaptor) "--adapter ${rep.adaptor!!.dockerPath}" else ""} \
+                ${if (rep is FastqReplicatePE) "--fastqs-r1 ${rep.fastqsR1.joinToString(" ") { it.dockerPath }}" else ""} \
+                ${if (rep is FastqReplicatePE) "--fastqs-r2 ${rep.fastqsR2.joinToString(" ") { it.dockerPath }}" else ""} \
+                ${if (rep is FastqReplicatePE && !detectAdaptor) "--adapter-r1 ${rep.adaptorR1!!.dockerPath}" else ""} \
+                ${if (rep is FastqReplicatePE && !detectAdaptor) "--adapter-r2 ${rep.adaptorR2!!.dockerPath}" else ""} \
+                ${if (detectAdaptor) "--auto-detect-adapter" else ""} \
+                --min-trim-len ${params.minTrimLen} \
+                --err-rate ${params.errRate} \
+                --nth ${params.numThreads}
+            """
 }

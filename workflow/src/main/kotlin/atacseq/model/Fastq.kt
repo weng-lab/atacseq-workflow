@@ -7,7 +7,7 @@ interface FastqSamples {
 }
 
 data class FastqSamplesSE(override val replicates: List<FastqReplicateSE>) : FastqSamples
-data class FastqSamplessPE(override val replicates: List<FastqReplicatePE>) : FastqSamples
+data class FastqSamplesPE(override val replicates: List<FastqReplicatePE>) : FastqSamples
 
 interface FastqReplicate {
     val name: String

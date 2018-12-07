@@ -15,7 +15,7 @@ repositories {
 
 dependencies {
     compile(kotlin("stdlib-jdk8"))
-    compile("io.krews", "krews", "0.2.9")
+    compile("io.krews", "krews", "0.3.0")
 }
 
 application {
