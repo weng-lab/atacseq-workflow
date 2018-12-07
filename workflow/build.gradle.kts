@@ -28,4 +28,6 @@ tasks.withType<KotlinCompile> {
 
 tasks.withType<ShadowJar> {
     baseName = "krews-sample"
+    classifier = ""
+    destinationDir = file("build")
 }
