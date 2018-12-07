@@ -1,8 +1,8 @@
 package task
 
-import atacseq.model.*
-import krews.core.*
-import krews.file.*
+import krews.core.CacheIgnored
+import krews.core.WorkflowBuilder
+import krews.file.OutputFile
 import model.*
 import org.reactivestreams.Publisher
 

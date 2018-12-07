@@ -1,6 +1,6 @@
 package task
 
-import atacseq.model.*
+import model.*
 import krews.core.*
 import krews.file.*
 import model.MergedFastqReplicate

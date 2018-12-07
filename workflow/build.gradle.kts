@@ -15,11 +15,11 @@ repositories {
 
 dependencies {
     compile(kotlin("stdlib-jdk8"))
-    compile("io.krews", "krews", "0.3.0")
+    compile("io.krews", "krews", "0.3.1")
 }
 
 application {
-    mainClassName = "atacseq.AtacSeqWorkflowKt"
+    mainClassName = "AtacSeqWorkflowKt"
 }
 
 tasks.withType<KotlinCompile> {
