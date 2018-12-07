@@ -1,4 +1,4 @@
-package atacseq.task
+package task
 
 import krews.core.*
 import krews.file.*

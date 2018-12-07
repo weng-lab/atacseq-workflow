@@ -1,8 +1,9 @@
-package atacseq.task
+package task
 
 import atacseq.model.*
 import krews.core.*
 import krews.file.*
+import model.*
 import org.reactivestreams.Publisher
 
 data class TrimAdapterParams(

@@ -1,4 +1,4 @@
-package atacseq.model
+package model
 
 import krews.file.File
 

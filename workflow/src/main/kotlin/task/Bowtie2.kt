@@ -1,8 +1,11 @@
-package atacseq.task
+package task
 
 import atacseq.model.*
 import krews.core.*
 import krews.file.*
+import model.MergedFastqReplicate
+import model.MergedFastqReplicatePE
+import model.MergedFastqReplicateSE
 import org.reactivestreams.Publisher
 
 data class Bowtie2Params(

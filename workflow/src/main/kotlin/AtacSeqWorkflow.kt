@@ -1,10 +1,8 @@
-package atacseq
-
-import atacseq.model.*
-import atacseq.task.*
 import krews.core.*
 import krews.run
+import model.FastqSamples
 import reactor.core.publisher.toFlux
+import task.*
 
 fun main(args: Array<String>) = run(atacSeqWorkflow, args)
 
