@@ -8,10 +8,16 @@
 # run_spp.R modified to load required caTools
 #
 
+FROM atacseq-common:1.0.0 as common
+
 FROM conoria/alpine-r
 
 # scripts
 COPY src/ /app
+RUN rm /app/common
+
+# common scripts
+COPY --from=common /app/common /app/common
 
 # SPP and dependencies
 RUN apk add --no-cache python wget boost-dev ghostscript && \

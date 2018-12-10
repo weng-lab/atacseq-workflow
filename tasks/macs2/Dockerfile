@@ -8,10 +8,16 @@
 # "unusual" chromosomes will not be filtered; use a minimal chrom sizes file to remove these
 #
 
+FROM atacseq-common:1.0.0 as common
+
 FROM alpine:3.8
 
 # scripts
 COPY src/ /app
+RUN rm /app/common
+
+# common scripts
+COPY --from=common /app/common /app/common
 
 # macs2 binaries and prerequisites
 RUN apk add --no-cache git py-pip bash build-base zlib-dev python python-dev libstdc++ && \

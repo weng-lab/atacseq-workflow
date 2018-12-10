@@ -4,10 +4,16 @@
 # encode_common modified to mv files rather than hard link
 #
 
+FROM atacseq-common:1.0.0 as common
+
 FROM alpine:3.8
 
-# python scripts
+# scripts
 COPY src/ /app
+RUN rm /app/common
+
+# common scripts
+COPY --from=common /app/common /app/common
 
 # python
 RUN apk add --no-cache python
