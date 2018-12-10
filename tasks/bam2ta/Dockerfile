@@ -6,15 +6,16 @@
 # modified encode_common_genomic to allow a tmpdir on the data disk rather than the smaller boot disk for sambamba
 #
 
-FROM atacseq-common:1.0 as common
+FROM atacseq-common:1.0.0 as common
 
 FROM alpine:3.8
 
-# common scripts
-COPY --from=common /app /app
-
 # scripts
 COPY src/ /app
+RUN rm /app/common
+
+# common scripts
+COPY --from=common /app/common /app/common
 
 # bedtools, sambamba
 RUN apk add --no-cache git bash build-base zlib-dev python libstdc++ && \
