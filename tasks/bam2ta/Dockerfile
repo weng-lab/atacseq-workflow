@@ -6,7 +6,12 @@
 # modified encode_common_genomic to allow a tmpdir on the data disk rather than the smaller boot disk for sambamba
 #
 
+FROM atacseq-common:1.0 as common
+
 FROM alpine:3.8
+
+# common scripts
+COPY --from=common /app /app
 
 # scripts
 COPY src/ /app

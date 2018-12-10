@@ -1,0 +1,3 @@
+IMAGE_NAME=atacseq-common
+IMAGE_VERSION=1.0.0
+PUSH_IMAGE=false

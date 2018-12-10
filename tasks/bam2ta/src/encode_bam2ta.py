@@ -6,7 +6,8 @@
 import sys
 import os
 import argparse
-from encode_common_genomic import *
+from common.encode_common_genomic import *
+from common.encode_common import *
 
 def parse_arguments():
     parser = argparse.ArgumentParser(prog='ENCODE DCC BAM 2 TAGALIGN.',

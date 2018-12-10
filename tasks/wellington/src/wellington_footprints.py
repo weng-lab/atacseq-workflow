@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import multiprocessing as mp
 import argparse, os
+import math
 from clint.textui import progress, puts_err
 import pyDNase
 from pyDNase import footprinting

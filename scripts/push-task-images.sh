@@ -7,17 +7,16 @@ set -e
 # cd to project root directory
 cd "$(dirname "$(dirname "$0")")"
 
-# import common stuff
-source scripts/lib/common.sh
-
 for taskDir in tasks/*/ ; do
-    IMAGE_NAME="${ORG}/${IMAGE_PREFIX}-$(basename ${taskDir})"
-    VERSION=$(cat ${taskDir}Versionfile)
-    TAG=${IMAGE_NAME}:${VERSION}
-    if docker pull ${TAG} >/dev/null 2>&1; then
+    PUSH_IMAGE=true
+    source $taskDir/docker-build-def.sh
+    TAG=${IMAGE_NAME}:${IMAGE_VERSION}
+    if [[ "$PUSH_IMAGE" = false ]]; then
+        echo "PUSH_IMAGE disabled for ${IMAGE_NAME}"
+    elif docker pull ${TAG} >/dev/null 2>&1; then
         echo "${TAG} found remotely. Skipping push..."
     else
         echo "Pushing ${TAG}"
-        docker push ${TAG}
+        #docker push ${TAG}
     fi
 done

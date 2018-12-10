@@ -6,8 +6,9 @@
 import sys
 import os
 import argparse
-from encode_common_genomic import *
-from encode_common_log_parser import parse_xcor_score
+from common.encode_common import *
+from common.encode_common_genomic import *
+from common.encode_common_log_parser import parse_xcor_score
 
 def parse_arguments():
     parser = argparse.ArgumentParser(prog='ENCODE DCC cross-correlation analysis.',
@@ -25,6 +26,8 @@ def parse_arguments():
                         help='Number of threads to parallelize.')
     parser.add_argument('--out-dir', default='', type=str,
                         help='Output directory.')
+    parser.add_argument("--output-prefix", type = str, default = 'output',
+                        help = "output file name prefix; defaults to 'output'")
     parser.add_argument('--log-level', default='INFO', 
                         choices=['NOTSET','DEBUG','INFO',
                             'WARNING','CRITICAL','ERROR','CRITICAL'],
@@ -35,9 +38,8 @@ def parse_arguments():
     log.info(sys.argv)
     return args
 
-def xcor(ta, speak, nth, out_dir):
-    prefix = os.path.join(out_dir,
-        os.path.basename(strip_ext_ta(ta)))
+def xcor(ta, speak, nth, out_dir, output_prefix):
+    prefix = os.path.join(out_dir, output_prefix)
     xcor_plot_pdf = '{}.cc.plot.pdf'.format(prefix)
     xcor_score = '{}.cc.qc'.format(prefix)
     fraglen_txt = '{}.cc.fraglen.txt'.format(prefix)
@@ -78,17 +80,17 @@ def main():
         log.info('Subsampling TAGALIGN for xcor...')
         if args.paired_end:
             ta_subsampled = subsample_ta_pe(
-                args.ta, args.subsample, True, True, args.out_dir)
+                args.ta, args.subsample, True, True, args.out_dir, args.output_prefix)
         else:
             ta_subsampled = subsample_ta_se(
-                args.ta, args.subsample, True, args.out_dir)
+                args.ta, args.subsample, True, args.out_dir, args.output_prefix)
         temp_files.append(ta_subsampled)
     else:
         ta_subsampled = args.ta
 
     log.info('Cross-correlation analysis...')
     xcor_plot_pdf, xcor_plot_png, xcor_score, fraglen_txt = xcor(
-        ta_subsampled, args.speak, args.nth, args.out_dir)
+        ta_subsampled, args.speak, args.nth, args.out_dir, args.output_prefix)
 
     log.info('Removing temporary files...')
     rm_f(temp_files)

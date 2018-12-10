@@ -4,7 +4,7 @@
 # Author: Jin Lee (leepc12@gmail.com)
 
 import os
-from encode_common import *
+from .encode_common import *
 
 def samtools_index(bam, out_dir=''):
     bai = '{}.bai'.format(bam)
@@ -69,7 +69,8 @@ def sambamba_sort(bam, nth, out_dir):
         os.path.basename(strip_ext_bam(bam)))
     srt_bam = '{}.srt.bam'.format(prefix)
 
-    cmd = 'sambamba sort {} -o {} -t {}'.format(
+    cmd = 'sambamba sort --tmpdir={} {} -o {} -t {}'.format(
+        out_dir,
         bam,
         srt_bam,
         nth)
@@ -94,7 +95,8 @@ def sambamba_name_sort(bam, nth, out_dir):
         os.path.basename(strip_ext_bam(bam)))
     nmsrt_bam = '{}.nmsrt.bam'.format(prefix)
 
-    cmd = 'sambamba sort -n {} -o {} -t {}'.format(
+    cmd = 'sambamba sort --tmpdir={} -n {} -o {} -t {}'.format(
+        out_dir,
         bam,
         nmsrt_bam,
         nth)
@@ -129,9 +131,8 @@ def locate_picard():
             raise Exception(msg)
             
 
-def subsample_ta_se(ta, subsample, non_mito, out_dir):
-    prefix = os.path.join(out_dir,
-        os.path.basename(strip_ext_ta(ta)))
+def subsample_ta_se(ta, subsample, non_mito, out_dir, out_prefix):
+    prefix = os.path.join(out_dir, out_prefix)
     ta_subsampled = '{}.{}{}.tagAlign.gz'.format(
         prefix,
         'no_chrM.' if non_mito else '',
@@ -151,9 +152,8 @@ def subsample_ta_se(ta, subsample, non_mito, out_dir):
     run_shell_cmd(cmd)
     return ta_subsampled
 
-def subsample_ta_pe(ta, subsample, non_mito, r1_only, out_dir):
-    prefix = os.path.join(out_dir,
-        os.path.basename(strip_ext_ta(ta)))
+def subsample_ta_pe(ta, subsample, non_mito, r1_only, out_dir, out_prefix):
+    prefix = os.path.join(out_dir, out_prefix)
     ta_subsampled = '{}.{}{}{}.tagAlign.gz'.format(
         prefix,
         'no_chrM.' if non_mito else '',

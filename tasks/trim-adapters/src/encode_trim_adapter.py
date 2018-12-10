@@ -9,7 +9,7 @@ import argparse
 import multiprocessing
 import copy
 from detect_adapter import detect_most_likely_adapter
-from encode_common import *
+from common.encode_common import *
 
 def parse_arguments(debug=False):
     parser = argparse.ArgumentParser(prog='ENCODE DCC adapter trimmer.',
