@@ -52,9 +52,10 @@ fun WorkflowBuilder.trimAdapterTask(i: Publisher<TrimAdapterInput>) = this.task<
                 ${if (rep is FastqReplicatePE) "--fastqs-r2 ${rep.fastqsR2.joinToString(" ") { it.dockerPath }}" else ""} \
                 ${if (rep is FastqReplicatePE && !detectAdaptor) "--adapter-r1 ${rep.adaptorR1!!.dockerPath}" else ""} \
                 ${if (rep is FastqReplicatePE && !detectAdaptor) "--adapter-r2 ${rep.adaptorR2!!.dockerPath}" else ""} \
+                ${if (rep is FastqReplicatePE) "--paired-end" else ""}
                 ${if (detectAdaptor) "--auto-detect-adapter" else ""} \
                 --min-trim-len ${params.minTrimLen} \
                 --err-rate ${params.errRate} \
-                --nth ${params.numThreads}
+                --nth ${params.numThreads} \
             """
 }
