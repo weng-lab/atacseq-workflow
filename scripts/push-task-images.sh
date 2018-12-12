@@ -17,6 +17,6 @@ for taskDir in tasks/*/ ; do
         echo "${TAG} found remotely. Skipping push..."
     else
         echo "Pushing ${TAG}"
-        #docker push ${TAG}
+        docker push ${TAG}
     fi
 done
