@@ -97,9 +97,10 @@ def rm_unmapped_lowq_reads_pe(bam, multimapping, mapq_thresh, nth, out_dir, pref
         #     nth)
         # run_shell_cmd(cmd1)
         cmd1 = 'samtools view -F 524 -f 2 -u {} | '
-        cmd1 += 'sambamba sort -n /dev/stdin -o {} -t {} '
+        cmd1 += 'sambamba sort --tempdir={} -n /dev/stdin -o {} -t {} '
         cmd1 = cmd1.format(
             bam,
+            out_dir,
             tmp_filt_bam,
             nth)
         run_shell_cmd(cmd1)
@@ -124,10 +125,11 @@ def rm_unmapped_lowq_reads_pe(bam, multimapping, mapq_thresh, nth, out_dir, pref
         #     nth)
         # run_shell_cmd(cmd1)
         cmd1 = 'samtools view -F 1804 -f 2 -q {} -u {} | '
-        cmd1 += 'sambamba sort -n /dev/stdin -o {} -t {}'
+        cmd1 += 'sambamba sort --tempdir={} -n /dev/stdin -o {} -t {}'
         cmd1 = cmd1.format(
             mapq_thresh,
             bam,
+            out_dir,
             tmp_filt_bam,
             nth)
         run_shell_cmd(cmd1)
@@ -147,9 +149,10 @@ def rm_unmapped_lowq_reads_pe(bam, multimapping, mapq_thresh, nth, out_dir, pref
     #     prefix,
     #     nth)
     cmd = 'samtools view -F 1804 -f 2 -u {} | '
-    cmd += 'sambamba sort /dev/stdin -o {} -t {}'
+    cmd += 'sambamba sort /dev/stdin --tempdir={} -o {} -t {}'
     cmd = cmd.format(
         fixmate_bam,
+        out_dir,
         filt_bam,
         nth)
     run_shell_cmd(cmd)
@@ -184,11 +187,12 @@ def mark_dup_sambamba(bam, nth, out_dir, prefix = "output"): # shared by both se
     dupmark_bam = '{}.dupmark.bam'.format(prefix)
     dup_qc = '{}.dup.qc'
 
-    cmd = 'sambamba markdup -t {} --hash-table-size=17592186044416 '
+    cmd = 'sambamba markdup -t {} --tempdir={} --hash-table-size=17592186044416 '
     cmd += '--overflow-list-size=20000000 '
     cmd += '--io-buffer-size=256 {} {} 2> {}'
     cmd = cmd.format(
         nth,
+        out_dir,
         bam,
         dupmark_bam,
         dup_qc)
