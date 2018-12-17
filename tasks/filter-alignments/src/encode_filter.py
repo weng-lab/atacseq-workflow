@@ -60,10 +60,11 @@ def rm_unmapped_lowq_reads_se(bam, multimapping, mapq_thresh, nth, out_dir, pref
         #     filt_bam,
         #     prefix,
         #     nth)
-        cmd2 += 'sambamba sort /dev/stdin -o {} -t {}'
+        cmd2 += 'sambamba sort /dev/stdin --tmpdir={} -o {} -t {}'
         cmd2 = cmd2.format(
             qname_sort_bam,
             multimapping,
+            out_dir,
             filt_bam,
             nth)
         run_shell_cmd(cmd2)
@@ -97,7 +98,7 @@ def rm_unmapped_lowq_reads_pe(bam, multimapping, mapq_thresh, nth, out_dir, pref
         #     nth)
         # run_shell_cmd(cmd1)
         cmd1 = 'samtools view -F 524 -f 2 -u {} | '
-        cmd1 += 'sambamba sort --tempdir={} -n /dev/stdin -o {} -t {} '
+        cmd1 += 'sambamba sort --tmpdir={} -n /dev/stdin -o {} -t {} '
         cmd1 = cmd1.format(
             bam,
             out_dir,
@@ -125,7 +126,7 @@ def rm_unmapped_lowq_reads_pe(bam, multimapping, mapq_thresh, nth, out_dir, pref
         #     nth)
         # run_shell_cmd(cmd1)
         cmd1 = 'samtools view -F 1804 -f 2 -q {} -u {} | '
-        cmd1 += 'sambamba sort --tempdir={} -n /dev/stdin -o {} -t {}'
+        cmd1 += 'sambamba sort --tmpdir={} -n /dev/stdin -o {} -t {}'
         cmd1 = cmd1.format(
             mapq_thresh,
             bam,
@@ -149,7 +150,7 @@ def rm_unmapped_lowq_reads_pe(bam, multimapping, mapq_thresh, nth, out_dir, pref
     #     prefix,
     #     nth)
     cmd = 'samtools view -F 1804 -f 2 -u {} | '
-    cmd += 'sambamba sort /dev/stdin --tempdir={} -o {} -t {}'
+    cmd += 'sambamba sort /dev/stdin --tmpdir={} -o {} -t {}'
     cmd = cmd.format(
         fixmate_bam,
         out_dir,
@@ -187,7 +188,7 @@ def mark_dup_sambamba(bam, nth, out_dir, prefix = "output"): # shared by both se
     dupmark_bam = '{}.dupmark.bam'.format(prefix)
     dup_qc = '{}.dup.qc'
 
-    cmd = 'sambamba markdup -t {} --tempdir={} --hash-table-size=17592186044416 '
+    cmd = 'sambamba markdup -t {} --tmpdir={} --hash-table-size=17592186044416 '
     cmd += '--overflow-list-size=20000000 '
     cmd += '--io-buffer-size=256 {} {} 2> {}'
     cmd = cmd.format(
