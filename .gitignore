@@ -1,6 +1,9 @@
 *~
 \#*\#
 
+# Python
+*.pyc
+
 # Windows thumbnail db
 Thumbs.db
 
