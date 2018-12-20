@@ -2,8 +2,63 @@
 
 import subprocess
 import tempfile
+import gzip
 
-from .cmds import twoBitToFa
+from .cmds import twoBitToFa, fastacenter
+
+def insertmethylfasta(inseqs, outseqs, coords, methylpeaks):
+    """
+    Inserts methylated basepairs into a FASTA file.
+
+    @param inseqs input FASTA file.
+    @param outseqs output FASTA file with methylated basepairs.
+    @param coords coordinates of input peaks, as a tuple of chromosome, start, end.
+    @param methylpeaks coordinates of identified methylation sites, mapping peaks to methyl coordinates.
+    """
+    sequences = {}; cseq = ""; cseqid = -1
+    with open(inseqs, 'r') as f:
+        with open(outseqs, 'w') as o:
+            for line in f:
+                if line.startswith('>'):
+                    if cseq != "":
+                        o.write('>' + cseq + '.' + str(cseqid) + '\n' + insertmethyl(sequences[cseq], coords[cseqid][1], methylpeaks[coords[cseqid]]) + '\n')
+                    cseq = line.strip()[1:]
+                    cseqid += 1
+                    sequences[cseq] = ""
+                else:
+                    sequences[cseq] += line.strip()
+
+def methylintersection(peaks, coords, methylpaths):
+    """
+    Intersects a set of TF peaks with one or more methyl BED files; returns intersecting coordinates as basepair, strand tuples.
+
+    @param peaks path to input peak file.
+    @param coords coordinates of the input peaks, as a tuple of chromosome, start, end.
+    @param methylpaths paths to methyl BED files to intersect.
+    """
+    methylpeaks = { k: [] for k in coords }
+    for methylpath in methylpaths:
+        lines = subprocess.check_output(
+            [ "bedtools", "intersect", "-a", methylpath, "-b", peaks, "-wa", "-wb" ]
+        ).decode('ascii').split('\n')[:-1]
+        for line in lines:
+            line = line.strip().split('\t')
+            opeak = tuple(line[11:14])
+            methylpeaks[opeak].append( (line[1], line[5]) )
+    return methylpeaks
+
+def insertmethyl(seq, sstart, methylpeaks):
+    """
+    Inserts methyl symbols ('m' for + strand and '1' for - strand) into a DNA sequence.
+
+    @param seq the input sequence as a string of ACTGactg
+    @param sstart the starting basepair of the sequence relative to the input peaks
+    @param methylpeaks list of methylation peaks, with a start coordinate and a strand
+    """
+    seq = [ x for x in seq ]
+    for start, strand in methylpeaks:
+        seq[int(start) - int(sstart)] = 'm' if strand == '+' else '1'
+    return ''.join(seq).replace('a', 'A').replace('c', 'C').replace('g', 'G').replace('t', 'T')
 
 def linerange(infile, start, end):
     """
@@ -21,7 +76,7 @@ def linerange(infile, start, end):
             if not line: break
             yield line
 
-def getfasta(peaks, twobit, outpath, linerange = (0, 500)):
+def getfasta(peaks, twobit, outpath, lrange = (0, 500)):
     """
     Produces a FASTA for a subset of lines in a peak file.
     
@@ -31,12 +86,11 @@ def getfasta(peaks, twobit, outpath, linerange = (0, 500)):
     @param linerange: range of lines to select from the peak file.
     """
     with tempfile.NamedTemporaryFile() as f:
-        for line in linerange(peaks, *linerange):
+        for line in linerange(peaks, *lrange):
             line = line.strip().split('\t')
             f.write('\t'.join(line[:4]) + '\n') # cut to first four fields for twoBitToFa
         f.seek(0)
-        with open(outpath, 'r') as outf:
-            subprocess.call(twoBitToFa(twobit, self._out("top501-1000.seqs"), f.name))
+        subprocess.call(twoBitToFa(twobit, outpath, f.name))
 
 def centerseq(seqs, outpath, flank, clen = 100):
     """
@@ -49,7 +103,7 @@ def centerseq(seqs, outpath, flank, clen = 100):
     """
     with open(seqs, 'r') as f:
         with open(outpath, 'w') as o:
-            subprocess.call(fastacenter(flank, clen), stdin = seqs, stdout = outpath)
+            subprocess.call(fastacenter(flank, clen), stdin = f, stdout = o)
 
 def shiftpeaks(peaks, chrominfo, offset):
     """
@@ -78,8 +132,8 @@ def resizeandclip(inpath, outpath, chromsizes, newsize = 150):
     @param chromsizes path to chromosome sizes for this assembly.
     @param newsize fixed with to which peaks should be resized.
     """
-    
-    with open(inpath, 'r') as f:
+    _open = gzip.open if inpath.endswith(".gz") else open
+    with _open(inpath, 'r') as f:
         with open(outpath, 'w') as o:
             for line in f:
 

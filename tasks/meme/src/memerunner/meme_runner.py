@@ -76,9 +76,9 @@ class MemeChipRunner:
         Produces FASTA sequence files for the top 500 and next 500 peaks on the resized and shifted input peaks.
         """
         getfasta(self.summitsFnp, self.twobit, self._tmp('top500.seqs'), (0, 500))
-        centerseqs(self._tmp('top500.seqs'), self._tmp('top500.seqs.center'), self._tmp('top500.seqs.flank'), 100)
+        centerseq(self._tmp('top500.seqs'), self._tmp('top500.seqs.center'), self._tmp('top500.seqs.flank'), 100)
         getfasta(self.summitsFnp, self.twobit, self._tmp('top501-1000.seqs'), (500, 1000))
-        centerseqs(self._tmp('top501-1000.seqs'), self._tmp('top501-1000.seqs.center'), self._tmp('top501-1000.seqs.flank'), 100)
+        centerseq(self._tmp('top501-1000.seqs'), self._tmp('top501-1000.seqs.center'), self._tmp('top501-1000.seqs.flank'), 100)
 
     def run_meme(self, outsuffix = ".center.meme", meme_opts = DEFAULT_MEME_OPTS):
         """
@@ -92,6 +92,6 @@ class MemeChipRunner:
                 meme(
                     self._tmp(prefix + '.seqs.center'),
                     self._out(prefix + outsuffix),
-                    self.meme_opts
+                    meme_opts
                 )
             )
