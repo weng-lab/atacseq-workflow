@@ -28,7 +28,7 @@ def insertmethylfasta(inseqs, outseqs, coords, methylpeaks):
                 else:
                     sequences[cseq] += line.strip()
 
-def methylintersection(peaks, coords, methylpaths):
+def methylintersection(peaks, coords, methylpaths, threshold = 50):
     """
     Intersects a set of TF peaks with one or more methyl BED files; returns intersecting coordinates as basepair, strand tuples.
 
@@ -43,6 +43,7 @@ def methylintersection(peaks, coords, methylpaths):
         ).decode('ascii').split('\n')[:-1]
         for line in lines:
             line = line.strip().split('\t')
+            if int(line[-1]) < threshold: continue # skip if not methylated at least threshold% of the time
             opeak = tuple(line[11:14])
             methylpeaks[opeak].append( (line[1], line[5]) )
     return methylpeaks
