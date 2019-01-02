@@ -10,12 +10,13 @@ plugins {
 version = "1.0"
 
 repositories {
+    mavenLocal()
     jcenter()
 }
 
 dependencies {
     compile(kotlin("stdlib-jdk8"))
-    compile("io.krews", "krews", "0.4.0")
+    compile("io.krews", "krews", "0.4.3")
 }
 
 application {
