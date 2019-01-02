@@ -1,14 +1,14 @@
 package task
 
-import krews.core.*
-import krews.file.*
+import krews.core.WorkflowBuilder
+import krews.file.File
+import krews.file.OutputFile
 import org.reactivestreams.Publisher
 
 data class Bam2taParams(
         val disableTn5Shift: Boolean,
         val regexGrepVTA: String = "chrM",
-        val subsample: Int = 0,
-        @CacheIgnored val numThreads: Int = 1
+        val subsample: Int = 0
 )
 
 data class Bam2taInput(
@@ -26,7 +26,7 @@ data class Bam2taOutput(
 fun WorkflowBuilder.bam2taTask(i: Publisher<Bam2taInput>) = this.task<Bam2taInput, Bam2taOutput>("bam2ta", i) {
     val params = taskParams<Bam2taParams>()
 
-    dockerImage = "genomealmanac/atacseq-bam2ta:1.0.3"
+    dockerImage = "genomealmanac/atacseq-bam2ta:1.0.4"
 
     output =
             Bam2taOutput(
@@ -44,7 +44,6 @@ fun WorkflowBuilder.bam2taTask(i: Publisher<Bam2taInput>) = this.task<Bam2taInpu
                 ${if (input.pairedEnd) "--paired-end" else ""} \
                 ${if (params.disableTn5Shift) "--disable-tn5-shift" else ""} \
                 --regex-grep-v-ta ${params.regexGrepVTA} \
-                --subsample ${params.subsample} \
-                --nth ${params.numThreads}
+                --subsample ${params.subsample}
             """
 }

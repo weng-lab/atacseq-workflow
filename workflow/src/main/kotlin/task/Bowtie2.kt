@@ -1,8 +1,8 @@
 package task
 
-import model.*
-import krews.core.*
-import krews.file.*
+import krews.core.WorkflowBuilder
+import krews.file.File
+import krews.file.OutputFile
 import model.MergedFastqReplicate
 import model.MergedFastqReplicatePE
 import model.MergedFastqReplicateSE
@@ -11,8 +11,7 @@ import org.reactivestreams.Publisher
 data class Bowtie2Params(
         val idxTar: File,
         val multimapping: Int? = 4,
-        val scoreMin: String? = null,
-        @CacheIgnored val numThreads: Int = 1
+        val scoreMin: String? = null
 )
 
 data class Bowtie2Input(
@@ -32,7 +31,7 @@ data class Bowtie2Output(
 fun WorkflowBuilder.bowtie2Task(i: Publisher<Bowtie2Input>) = this.task<Bowtie2Input, Bowtie2Output>("bowtie2", i) {
     val params = taskParams<Bowtie2Params>()
 
-    dockerImage = "genomealmanac/atacseq-bowtie2:1.0.3"
+    dockerImage = "genomealmanac/atacseq-bowtie2:1.0.4"
 
     val prefix = "bowtie2/${input.mergedRep.name}"
     output =
@@ -58,7 +57,6 @@ fun WorkflowBuilder.bowtie2Task(i: Publisher<Bowtie2Input>) = this.task<Bowtie2I
                 ${if (mergedRep is MergedFastqReplicatePE) "--fastq-r2 ${mergedRep.mergedR2.dockerPath}" else ""} \
                 ${if (mergedRep is MergedFastqReplicatePE) "--paired-end" else ""} \
                 ${if (params.scoreMin != null) "--score-min ${params.scoreMin}" else ""} \
-                --multimapping ${params.multimapping} \
-                --nth ${params.numThreads}
+                --multimapping ${params.multimapping}
             """
 }

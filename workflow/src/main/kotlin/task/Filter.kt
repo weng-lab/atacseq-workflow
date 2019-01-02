@@ -1,7 +1,8 @@
 package task
 
-import krews.core.*
-import krews.file.*
+import krews.core.WorkflowBuilder
+import krews.file.File
+import krews.file.OutputFile
 import org.reactivestreams.Publisher
 
 enum class FilterDupMarker {
@@ -12,8 +13,7 @@ data class FilterParams(
         val multimapping: Int = 0,
         val mapqThresh: Int = 30,
         val dupMarker: FilterDupMarker = FilterDupMarker.PICARD,
-        val noDupRemoval: Boolean = false,
-        @CacheIgnored val numThreads: Int = 1
+        val noDupRemoval: Boolean = false
 )
 
 data class FilterInput(
@@ -36,7 +36,7 @@ data class FilterOutput(
 fun WorkflowBuilder.filterTask(i: Publisher<FilterInput>) = this.task<FilterInput, FilterOutput>("filter-alignments", i) {
     val params = taskParams<FilterParams>()
 
-    dockerImage = "genomealmanac/atacseq-filter-alignments:1.0.5"
+    dockerImage = "genomealmanac/atacseq-filter-alignments:1.0.6"
 
     val prefix = "filter/${input.repName}"
     val noDupRemoval = params.noDupRemoval
@@ -62,7 +62,6 @@ fun WorkflowBuilder.filterTask(i: Publisher<FilterInput>) = this.task<FilterInpu
             --multimapping ${params.multimapping} \
             --dup-marker ${params.dupMarker.name.toLowerCase()} \
             --mapq-thresh ${params.mapqThresh} \
-            ${if (params.noDupRemoval) "--no-dup-removal" else ""} \
-            --nth ${params.numThreads}
+            ${if (params.noDupRemoval) "--no-dup-removal" else ""}
         """
 }

@@ -6,6 +6,7 @@
 import sys
 import os
 import argparse
+import multiprocessing
 from common.encode_common_genomic import *
 from common.encode_common import *
 
@@ -27,8 +28,6 @@ def parse_arguments():
                         help='Paired-end BAM')
     parser.add_argument('--out-dir', default='', type=str,
                             help='Output directory.')
-    parser.add_argument('--nth', type=int, default=1,
-                        help='Number of threads to parallelize.')
     parser.add_argument('--log-level', default='INFO', 
                         choices=['NOTSET','DEBUG','INFO',
                             'WARNING','CRITICAL','ERROR','CRITICAL'],
@@ -110,13 +109,15 @@ def main():
     # declare temp arrays
     temp_files = [] # files to deleted later at the end
 
+    num_cpus = multiprocessing.cpu_count()
+
     log.info('Converting BAM to TAGALIGN...')
     ta = bam2ta_se(args.bam, args.regex_grep_v_ta,
                    args.out_dir, args.output_prefix)
     if args.paired_end:
         seta = ta
         ta = bam2ta_pe(args.bam, args.regex_grep_v_ta,
-                        args.nth, args.out_dir, args.output_prefix)
+                        num_cpus, args.out_dir, args.output_prefix)
 
     if args.subsample:
         log.info('Subsampling TAGALIGN...')

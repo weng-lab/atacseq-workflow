@@ -38,8 +38,6 @@ def parse_arguments(debug=False):
                             row=merge_id, col=end_id).')
     parser.add_argument('--paired-end', action="store_true",
                         help='Paired-end FASTQs.')
-    parser.add_argument('--nth', type=int, default=1,
-                        help='Number of threads to parallelize.')
     parser.add_argument('--out-dir', default='', type=str,
                             help='Output directory.')
     parser.add_argument('--log-level', default='INFO', 
@@ -168,14 +166,16 @@ def main():
     log.info('Initializing and making output directory...')
     mkdir_p(args.out_dir)
 
+    num_cpus = multiprocessing.cpu_count()
+
     # declare temp arrays
     temp_files = [] # files to deleted later at the end
 
     log.info('Initializing multi-threading...')
     if args.paired_end:
-        num_process = min(2*len(args.fastqs),args.nth)
+        num_process = min(2*len(args.fastqs),num_cpus)
     else:
-        num_process = min(len(args.fastqs),args.nth)
+        num_process = min(len(args.fastqs),num_cpus)
     log.info('Number of threads={}.'.format(num_process))
     pool = multiprocessing.Pool(num_process)
 

@@ -162,8 +162,6 @@ def rm_unmapped_lowq_reads_pe(bam, multimapping, mapq_thresh, nth, out_dir, pref
 
 def mark_dup_picard(bam, out_dir, prefix = "output"): # shared by both se and pe
     prefix = os.path.join(out_dir, prefix)
-    # strip extension appended in the previous step
-    prefix = strip_ext(prefix,'filt') 
     dupmark_bam = '{}.dupmark.bam'.format(prefix)
     dup_qc = '{}.dup.qc'.format(prefix)
 
@@ -183,8 +181,6 @@ def mark_dup_picard(bam, out_dir, prefix = "output"): # shared by both se and pe
 
 def mark_dup_sambamba(bam, nth, out_dir, prefix = "output"): # shared by both se and pe
     prefix = os.path.join(out_dir, prefix)
-    # strip extension appended in the previous step
-    prefix = strip_ext(prefix,'filt') 
     dupmark_bam = '{}.dupmark.bam'.format(prefix)
     dup_qc = '{}.dup.qc'
 
@@ -202,8 +198,6 @@ def mark_dup_sambamba(bam, nth, out_dir, prefix = "output"): # shared by both se
 
 def rm_dup_se(dupmark_bam, nth, out_dir, prefix = "output"):
     prefix = os.path.join(out_dir, prefix)
-    # strip extension appended in the previous step
-    prefix = strip_ext(prefix,'dupmark') 
     nodup_bam = '{}.nodup.bam'.format(prefix)
 
     cmd1 = 'samtools view -@ {} -F 1804 -b {} > {}'
@@ -216,8 +210,6 @@ def rm_dup_se(dupmark_bam, nth, out_dir, prefix = "output"):
 
 def rm_dup_pe(dupmark_bam, nth, out_dir, prefix = "output"):
     prefix = os.path.join(out_dir, "output")
-    # strip extension appended in the previous step
-    prefix = strip_ext(prefix,'dupmark') 
     nodup_bam = '{}.nodup.bam'.format(prefix)
 
     cmd1 = 'samtools view -@ {} -F 1804 -f 2 -b {} > {}'
@@ -230,8 +222,6 @@ def rm_dup_pe(dupmark_bam, nth, out_dir, prefix = "output"):
 
 def pbc_qc_se(bam, out_dir, prefix = "output"):
     prefix = os.path.join(out_dir, prefix)
-    # strip extension appended in the previous step
-    prefix = strip_ext(prefix,'dupmark') 
     pbc_qc = '{}.pbc.qc'.format(prefix)
 
     cmd2 = 'bedtools bamtobed -i {} | '
@@ -298,6 +288,8 @@ def main():
     log.info('Initializing and making output directory...')
     mkdir_p(args.out_dir)
 
+    num_cpus = multiprocessing.cpu_count()
+
     # declare temp arrays
     temp_files = [] # files to deleted later at the end
 
@@ -305,11 +297,11 @@ def main():
     if args.paired_end:
         filt_bam = rm_unmapped_lowq_reads_pe(
                 args.bam, args.multimapping, args.mapq_thresh, 
-                args.nth, args.out_dir, args.output_prefix)
+                num_cpus, args.out_dir, args.output_prefix)
     else:
         filt_bam = rm_unmapped_lowq_reads_se(
                 args.bam, args.multimapping, args.mapq_thresh, 
-                args.nth, args.out_dir, args.output_prefix)
+                num_cpus, args.out_dir, args.output_prefix)
 
     if args.no_dup_removal:
         nodup_bam = filt_bam        
@@ -320,7 +312,7 @@ def main():
                                 filt_bam, args.out_dir, args.output_prefix)
         elif args.dup_marker=='sambamba':
             dupmark_bam, dup_qc = mark_dup_sambamba(
-                                filt_bam, args.nth, args.out_dir, args.output_prefix)
+                                filt_bam, num_cpus, args.out_dir, args.output_prefix)
         else:
             raise argparse.ArgumentTypeError(
             'Unsupported --dup-marker {}'.format(args.dup_marker))
@@ -329,17 +321,17 @@ def main():
         log.info('Removing dupes...')
         if args.paired_end:
             nodup_bam = rm_dup_pe(
-                        dupmark_bam, args.nth, args.out_dir, args.output_prefix)
+                        dupmark_bam, num_cpus, args.out_dir, args.output_prefix)
         else:
             nodup_bam = rm_dup_se(
-                        dupmark_bam, args.nth, args.out_dir, args.output_prefix)
+                        dupmark_bam, num_cpus, args.out_dir, args.output_prefix)
         samtools_index(dupmark_bam)
         temp_files.append(dupmark_bam)
         temp_files.append(dupmark_bam+'.bai')
 
     # initialize multithreading
     log.info('Initializing multi-threading...')
-    num_process = min(3,args.nth)
+    num_process = min(3, num_cpus)
     log.info('Number of threads={}.'.format(num_process))
     pool = multiprocessing.Pool(num_process)
 
@@ -351,17 +343,17 @@ def main():
     #                             (nodup_bam, args.out_dir))
     log.info('sambamba index...')
     ret_val_1 = pool.apply_async(sambamba_index, 
-                                (nodup_bam, args.nth, args.out_dir))
+                                (nodup_bam, num_cpus, args.out_dir))
     log.info('sambamba flagstat...')
     ret_val_2 = pool.apply_async(sambamba_flagstat,
-                                (nodup_bam, args.nth, args.out_dir))
+                                (nodup_bam, num_cpus, args.out_dir))
 
     log.info('Generating PBC QC log...')
     if not args.no_dup_removal:
         if args.paired_end:
             ret_val_3 = pool.apply_async(pbc_qc_pe,
                             (dupmark_bam,
-                                max(1,args.nth-2),
+                                max(1,num_cpus-2),
                                 args.out_dir, args.output_prefix))
         else:
             ret_val_3 = pool.apply_async(pbc_qc_se,

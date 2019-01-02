@@ -1,6 +1,5 @@
 package task
 
-import krews.core.CacheIgnored
 import krews.core.WorkflowBuilder
 import krews.file.OutputFile
 import model.*
@@ -8,8 +7,7 @@ import org.reactivestreams.Publisher
 
 data class TrimAdapterParams(
         val minTrimLen: Int = 5,
-        val errRate: Double = 0.1,
-        @CacheIgnored val numThreads: Int = 1
+        val errRate: Double = 0.1
 )
 
 data class TrimAdapterInput(
@@ -23,7 +21,7 @@ data class TrimAdapterOutput(
 fun WorkflowBuilder.trimAdapterTask(i: Publisher<TrimAdapterInput>) = this.task<TrimAdapterInput, TrimAdapterOutput>("trim-adapter", i) {
     val params = taskParams<TrimAdapterParams>()
 
-    dockerImage = "genomealmanac/atacseq-trim-adapters:1.0.3"
+    dockerImage = "genomealmanac/atacseq-trim-adapters:1.0.4"
 
     val rep = input.rep
     output =
@@ -55,7 +53,6 @@ fun WorkflowBuilder.trimAdapterTask(i: Publisher<TrimAdapterInput>) = this.task<
                 ${if (rep is FastqReplicatePE) "--paired-end" else ""} \
                 ${if (detectAdaptor) "--auto-detect-adapter" else ""} \
                 --min-trim-len ${params.minTrimLen} \
-                --err-rate ${params.errRate} \
-                --nth ${params.numThreads}
+                --err-rate ${params.errRate}
             """
 }

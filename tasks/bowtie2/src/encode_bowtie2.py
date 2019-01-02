@@ -132,6 +132,8 @@ def main():
     log.info('Initializing and making output directory...')
     mkdir_p(args.out_dir)
 
+    num_cpus = multiprocessing.cpu_count()
+
     # declare temp arrays
     temp_files = [] # files to deleted later at the end
 
@@ -168,18 +170,18 @@ def main():
         bam, align_log = bowtie2_pe(
             args.fastq_r1, args.fastq_r2, 
             bowtie2_index_prefix,
-            args.multimapping, args.score_min, args.nth,
+            args.multimapping, args.score_min, num_cpus,
             args.out_dir, args.output_prefix)
     else:
         bam, align_log = bowtie2_se(
             args.fastq, 
             bowtie2_index_prefix,
-            args.multimapping, args.score_min, args.nth,
+            args.multimapping, args.score_min, num_cpus,
             args.out_dir, args.output_prefix)
 
     # initialize multithreading
     log.info('Initializing multi-threading...')
-    num_process = min(2,args.nth)
+    num_process = min(2, num_cpus)
     log.info('Number of threads={}.'.format(num_process))
     pool = multiprocessing.Pool(num_process)
     
