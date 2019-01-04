@@ -209,7 +209,7 @@ def rm_dup_se(dupmark_bam, nth, out_dir, prefix = "output"):
     return nodup_bam
 
 def rm_dup_pe(dupmark_bam, nth, out_dir, prefix = "output"):
-    prefix = os.path.join(out_dir, "output")
+    prefix = os.path.join(out_dir, prefix)
     nodup_bam = '{}.nodup.bam'.format(prefix)
 
     cmd1 = 'samtools view -@ {} -F 1804 -f 2 -b {} > {}'
