@@ -3,7 +3,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import com.jfrog.bintray.gradle.BintrayExtension
 
 plugins {
-    kotlin("jvm") version "1.3.10"
+    kotlin("jvm") version "1.3.11"
     id("application")
     id("maven-publish")
     id("com.github.johnrengelman.shadow") version "4.0.2"
@@ -20,7 +20,7 @@ repositories {
 
 dependencies {
     compile(kotlin("stdlib-jdk8"))
-    compile("io.krews", "krews", "0.4.6")
+    compile("io.krews", "krews", "0.4.7")
 }
 
 application {
