@@ -74,7 +74,7 @@ def macs2(ta, chrsz, gensz, pval_thresh, smooth_win, cap_num_peak,
 
     cmd0 = 'macs2 callpeak '
     cmd0 += '-t {} -f BED{} -n {} -g {} -p {} '
-    cmd0 += '--shift {} --extsize {} --tempdir {}'
+    cmd0 += '--shift {} --extsize {} --tempdir {} '
     cmd0 += '--nomodel -B --SPMR '
     cmd0 += '--keep-dup all --call-summits '
     cmd0 = cmd0.format(
