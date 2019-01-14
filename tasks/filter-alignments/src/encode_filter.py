@@ -169,7 +169,7 @@ def mark_dup_picard(bam, out_dir, prefix = "output"): # shared by both se and pe
     cmd += locate_picard()
     cmd += ' MarkDuplicates '
     # cmd = 'picard MarkDuplicates '
-    cmd += 'INPUT={} OUTPUT={} TMP_DIR={}'
+    cmd += 'INPUT={} OUTPUT={} TMP_DIR={} '
     cmd += 'METRICS_FILE={} VALIDATION_STRINGENCY=LENIENT '
     cmd += 'ASSUME_SORTED=true REMOVE_DUPLICATES=false'
     cmd = cmd.format(
