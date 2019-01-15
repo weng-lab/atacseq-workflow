@@ -4,7 +4,7 @@
 # Author: Jin Lee (leepc12@gmail.com)
 
 import os
-from .encode_common import *
+from encode_common import *
 
 def samtools_index(bam, out_dir=''):
     bai = '{}.bai'.format(bam)
@@ -69,8 +69,7 @@ def sambamba_sort(bam, nth, out_dir):
         os.path.basename(strip_ext_bam(bam)))
     srt_bam = '{}.srt.bam'.format(prefix)
 
-    cmd = 'sambamba sort --tmpdir={} {} -o {} -t {}'.format(
-        out_dir,
+    cmd = 'sambamba sort {} -o {} -t {}'.format(
         bam,
         srt_bam,
         nth)
@@ -82,7 +81,8 @@ def samtools_name_sort(bam, nth, out_dir):
         os.path.basename(strip_ext_bam(bam)))
     nmsrt_bam = '{}.nmsrt.bam'.format(prefix)
 
-    cmd = 'samtools sort -n {} -o {} -T {} -@ {}'.format(
+    cmd = 'samtools sort --tmpdir={} -n {} -o {} -T {} -@ {}'.format(
+        out_dir,
         bam,
         nmsrt_bam,
         prefix,
@@ -131,8 +131,9 @@ def locate_picard():
             raise Exception(msg)
             
 
-def subsample_ta_se(ta, subsample, non_mito, out_dir, out_prefix):
-    prefix = os.path.join(out_dir, out_prefix)
+def subsample_ta_se(ta, subsample, non_mito, out_dir):
+    prefix = os.path.join(out_dir,
+        os.path.basename(strip_ext_ta(ta)))
     ta_subsampled = '{}.{}{}.tagAlign.gz'.format(
         prefix,
         'no_chrM.' if non_mito else '',
@@ -152,8 +153,9 @@ def subsample_ta_se(ta, subsample, non_mito, out_dir, out_prefix):
     run_shell_cmd(cmd)
     return ta_subsampled
 
-def subsample_ta_pe(ta, subsample, non_mito, r1_only, out_dir, out_prefix):
-    prefix = os.path.join(out_dir, out_prefix)
+def subsample_ta_pe(ta, subsample, non_mito, r1_only, out_dir):
+    prefix = os.path.join(out_dir,
+        os.path.basename(strip_ext_ta(ta)))
     ta_subsampled = '{}.{}{}{}.tagAlign.gz'.format(
         prefix,
         'no_chrM.' if non_mito else '',
@@ -260,13 +262,11 @@ def peak_to_bigbed(peak, peak_type, chrsz, out_dir):
     # create temporary .as file
     with open(as_file,'w') as fp: fp.write(as_file_contents)
 
-    cmd1 = "cat {} | grep -P 'chr[\dXY]+[ \\t]' > {}".format(chrsz, chrsz_tmp)
-    run_shell_cmd(cmd1)
     cmd2 = "zcat -f {} | sort -k1,1 -k2,2n > {}".format(peak, bigbed_tmp)
     run_shell_cmd(cmd2)
-    cmd3 = "bedClip {} {} {}".format(bigbed_tmp, chrsz_tmp, bigbed_tmp2)
+    cmd3 = "bedClip {} {} {}".format(bigbed_tmp, chrsz, bigbed_tmp2)
     run_shell_cmd(cmd3)
-    cmd4 = "bedToBigBed {} {} {} {}".format(bed_param, bigbed_tmp2, chrsz_tmp, bigbed)
+    cmd4 = "bedToBigBed {} {} {} {}".format(bed_param, bigbed_tmp2, chrsz, bigbed)
     run_shell_cmd(cmd4)
 
     # remove temporary files
