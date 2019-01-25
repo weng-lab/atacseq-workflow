@@ -6,7 +6,7 @@ set -e
 # cd to project root directory
 cd "$(dirname "$(dirname "$0")")"
 
-for taskDir in `ls tasks | sort` ; do
+for taskDir in `ls tasks | LC_COLLATE=C sort` ; do
     taskDir="tasks/${taskDir}"
     PUSH_IMAGE=true
     source $taskDir/docker-build-def.sh
