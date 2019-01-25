@@ -9,7 +9,9 @@ cd "$(dirname "$(dirname "$0")")"
 for taskDir in tasks/*/ ; do
     source $taskDir/docker-build-def.sh
     TAG=${IMAGE_NAME}:${IMAGE_VERSION}
-    docker pull ${TAG} >/dev/null 2>&1 || true
+    if [[ ! $taskDir == _* ]]; then
+        docker pull ${TAG} >/dev/null 2>&1 || true
+    fi
     
     EXISTING_IMAGE=$(docker image ls ${TAG} --format '{{ .ID }}')
     if [ -z $EXISTING_IMAGE ]; then
