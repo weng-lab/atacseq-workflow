@@ -7,9 +7,13 @@ set -e
 cd "$(dirname "$(dirname "$0")")"
 
 for taskDir in tasks/*/ ; do
+    PUSH_IMAGE=true
     source $taskDir/docker-build-def.sh
     TAG=${IMAGE_NAME}:${IMAGE_VERSION}
-    docker pull ${TAG} >/dev/null 2>&1 || true
+    if [[ "$PUSH_IMAGE" = true ]]; then
+        echo "Pulling latest $TAG..."
+        docker pull ${TAG} >/dev/null 2>&1 || true
+    fi
     
     EXISTING_IMAGE=$(docker image ls ${TAG} --format '{{ .ID }}')
     if [ -z $EXISTING_IMAGE ]; then
