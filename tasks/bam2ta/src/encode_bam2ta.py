@@ -19,7 +19,7 @@ def parse_arguments():
                         help='Disable TN5 shifting for DNase-Seq.')
     parser.add_argument("--output-prefix", type = str, default = 'output',
                         help = "output file name prefix; defaults to 'output'")
-    parser.add_argument('--regex-grep-v-ta', default='chrM | grep -v gl | grep -v hap',
+    parser.add_argument('--regex-grep-v-ta', default='chrM',
                         help='Pattern to remove matching reads from TAGALIGN.')
     parser.add_argument('--subsample', type=int, default=0,
                         help='Subsample TAGALIGN. \
