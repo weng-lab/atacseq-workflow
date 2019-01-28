@@ -45,7 +45,7 @@ def bam2ta_se(bam, regex_grep_v_ta, out_dir, prefix = "output"):
     cmd = 'bedtools bamtobed -i {} | '
     cmd += 'awk \'BEGIN{{OFS="\\t"}}{{$4="N";$5="1000";print $0}}\' | '
     if regex_grep_v_ta:
-        cmd += 'grep -v \'{}\' | grep -v gl | grep hap | '.format(regex_grep_v_ta)
+        cmd += 'grep -v \'{}\' | grep -v \'gl\' | grep -v \'hap\' | '.format(regex_grep_v_ta)
     cmd += 'gzip -nc > {}'
     cmd = cmd.format(
         bam,
