@@ -118,7 +118,13 @@ def macs2(ta, chrsz, gensz, pval_thresh, smooth_win, cap_num_peak,
             prefix)
         run_shell_cmd(cmd5)
 
-        cmd6 = 'bedGraphToBigWig {}_treat_pileup.sorted.bdg {} {}'
+        cmd5_1 = 'bedtools merge -i {}_treat_pileup.sorted.bdg -c 4 -o mean -d -1 > {}_treat_pileup.sorted.merged.bdg'
+        cmd5_1 = cmd5_1.format(
+            prefix,
+            prefix)
+        run_shell_cmd(cmd5_1)
+
+        cmd6 = 'bedGraphToBigWig {}_treat_pileup.sorted.merged.bdg {} {}'
         cmd6 = cmd6.format(
             prefix,
             chrsz,
