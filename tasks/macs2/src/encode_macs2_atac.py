@@ -149,11 +149,17 @@ def macs2(ta, chrsz, gensz, pval_thresh, smooth_win, cap_num_peak,
             fc_bedgraph)
         run_shell_cmd(cmd4)
       
-        cmd5 = 'LC_COLLATE=C sort -k1,1 -k2,2n {} > {}'
+        cmd5 = 'LC_COLLATE=C sort -k1,1 -k2,2n {} > {}_FC_SIGNAL_TO_MERGE.bdg'
         cmd5 = cmd5.format(
             fc_bedgraph,
-            fc_bedgraph_srt)
+            prefix)
         run_shell_cmd(cmd5)
+
+        cmd5_1 = 'bedtools merge -i {}_FC_SIGNAL_TO_MERGE.bdg -c 4 -o mean -d -1 > {}'
+        cmd5_1 = cmd5_1.format(
+            prefix,
+            fc_bedgraph_srt)
+        run_shell_cmd(cmd5_1)
 
         cmd6 = 'bedGraphToBigWig {} {} {}'
         cmd6 = cmd6.format(
@@ -185,11 +191,17 @@ def macs2(ta, chrsz, gensz, pval_thresh, smooth_win, cap_num_peak,
             pval_bedgraph)
         run_shell_cmd(cmd8)
 
-        cmd9 = 'LC_COLLATE=C sort -k1,1 -k2,2n {} > {}'
+        cmd9 = 'LC_COLLATE=C sort -k1,1 -k2,2n {} > {}_PVAL_SIGNAL_TO_MERGE.bdg'
         cmd9 = cmd9.format(
             pval_bedgraph,
-            pval_bedgraph_srt)
+            prefix)
         run_shell_cmd(cmd9)
+
+        cmd9_1 = 'bedtools merge -i {}_PVAL_SIGNAL_TO_MERGE.bdg -c 4 -o mean -d -1 > {}'
+        cmd9_1 = cmd9_1.format(
+            prefix,
+            pval_bedgraph_srt)
+        run_shell_cmd(cmd9_1)
 
         cmd10 = 'bedGraphToBigWig {} {} {}'
         cmd10 = cmd10.format(
