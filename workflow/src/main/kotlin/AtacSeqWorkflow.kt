@@ -19,26 +19,21 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
     val params = params<AtacSeqParams>()
     val forceSingleEnd = true
 
-
     val trimAdaptorInputs = params.samples.replicates
             .map { TrimAdapterInput(it) }
             .toFlux()
-    val trimAdapterTask = trimAdapterTask(trimAdaptorInputs)
+    val trimAdapterOutput = trimAdapterTask(trimAdaptorInputs)
 
-    val bowtie2Input = trimAdapterTask.outputPub
-            .map { Bowtie2Input(it.mergedReplicate) }
-    val bowtie2Task = bowtie2Task(bowtie2Input)
+    val bowtie2Input = trimAdapterOutput.map { Bowtie2Input(it.mergedReplicate) }
+    val bowtie2Output = bowtie2Task(bowtie2Input)
 
-    val filterInput = bowtie2Task.outputPub
-            .map { FilterInput(it.bam, it.repName, it.pairedEnd) }
-    val filterTask = filterTask(filterInput)
+    val filterInput = bowtie2Output.map { FilterInput(it.bam, it.repName, it.pairedEnd) }
+    val filterOutput = filterTask(filterInput)
 
-    val bam2taInput = filterTask.outputPub
-            .map { Bam2taInput(it.bam, it.repName, if(forceSingleEnd) false else it.pairedEnd) }
-    val bam2taTask = bam2taTask(bam2taInput)
+    val bam2taInput = filterOutput.map { Bam2taInput(it.bam, it.repName, if(forceSingleEnd) false else it.pairedEnd) }
+    val bam2taOutput = bam2taTask(bam2taInput)
 
-    val macs2Input = bam2taTask.outputPub
-            .map { Macs2Input(it.ta, it.repName, it.pairedEnd) }
+    val macs2Input = bam2taOutput.map { Macs2Input(it.ta, it.repName, it.pairedEnd) }
     macs2Task(macs2Input)
 
     /*

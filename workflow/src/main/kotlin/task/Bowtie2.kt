@@ -50,7 +50,7 @@ fun WorkflowBuilder.bowtie2Task(i: Publisher<Bowtie2Input>) = this.task<Bowtie2I
             """
             /app/encode_bowtie2.py \
                 ${params.idxTar.dockerPath} \
-                --out-dir $dockerDataDir/bowtie2 \
+                --out-dir $outputsDir/bowtie2 \
                 --output-prefix ${mergedRep.name} \
                 ${if (mergedRep is MergedFastqReplicateSE) "--fastq ${mergedRep.merged.dockerPath}" else ""} \
                 ${if (mergedRep is MergedFastqReplicatePE) "--fastq-r1 ${mergedRep.mergedR1.dockerPath}" else ""} \

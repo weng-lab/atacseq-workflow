@@ -39,7 +39,7 @@ fun WorkflowBuilder.bam2taTask(i: Publisher<Bam2taInput>) = this.task<Bam2taInpu
             """
             /app/encode_bam2ta.py \
                 ${input.bam.dockerPath} \
-                --out-dir $dockerDataDir/bam2ta \
+                --out-dir $outputsDir/bam2ta \
                 --output-prefix ${input.repName} \
                 ${if (input.pairedEnd) "--paired-end" else ""} \
                 ${if (params.disableTn5Shift) "--disable-tn5-shift" else ""} \

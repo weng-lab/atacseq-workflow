@@ -42,7 +42,7 @@ fun WorkflowBuilder.trimAdapterTask(i: Publisher<TrimAdapterInput>) = this.task<
     command =
             """
             /app/encode_trim_adapter.py \
-                --out-dir $dockerDataDir/trim \
+                --out-dir $outputsDir/trim \
                 --output-prefix ${rep.name} \
                 ${if (rep is FastqReplicateSE) "--fastqs ${rep.fastqs.joinToString(" ") { it.dockerPath }}" else ""} \
                 ${if (rep is FastqReplicateSE && !detectAdaptor) "--adapter ${rep.adaptor!!.dockerPath}" else ""} \

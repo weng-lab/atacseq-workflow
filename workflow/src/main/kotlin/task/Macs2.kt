@@ -50,7 +50,7 @@ fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>) = this.task<Macs2Input, 
             """
             /app/encode_macs2_atac.py \
                 ${input.ta.dockerPath} \
-                --out-dir $dockerDataDir/macs2 \
+                --out-dir $outputsDir/macs2 \
                 --output-prefix ${input.repName} \
                 ${if (params.gensz != null) "--gensz ${params.gensz}" else ""} \
                 --chrsz ${params.chrsz.dockerPath} \

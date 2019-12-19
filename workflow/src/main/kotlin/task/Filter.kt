@@ -56,7 +56,7 @@ fun WorkflowBuilder.filterTask(i: Publisher<FilterInput>) = this.task<FilterInpu
         """
         /app/encode_filter.py \
             ${input.bam.dockerPath} \
-            --out-dir $dockerDataDir/filter \
+            --out-dir $outputsDir/filter \
             --output-prefix ${input.repName} \
             ${if (input.pairedEnd) "--paired-end" else ""} \
             --multimapping ${params.multimapping} \
