@@ -41,7 +41,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/OWNER/REPOSITORY")
+            url = uri("https://maven.pkg.github.com/weng-lab/atacseq-workflow")
             credentials {
                 username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_USER")
                 password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
