@@ -1,4 +1,4 @@
-name: Test and Build on every Push
+name: Test on Every Push
 
 on: [push]
 
@@ -15,6 +15,3 @@ jobs:
 
       - name: Unit Test
         run: ./gradlew test
-
-      - name: Build with Gradle
-        run: ./gradlew build
