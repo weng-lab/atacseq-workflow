@@ -3,19 +3,13 @@
 # scripts from github.com/ENCODE-DCC/atac-seq-pipeline#86ed2d2
 #
 
-FROM atacseq-common:1.0.0 as common
-
 FROM anapsix/alpine-java:latest
 
 # scripts
 COPY src/ /app
-RUN rm /app/common
-
-# common scripts
-COPY --from=common /app/common /app/common
 
 # Picard jar and sambamba
-RUN apk add --no-cache wget build-base python zlib-dev git && \
+RUN apk add --no-cache xz-dev bzip2-dev wget build-base python zlib-dev git && \
     wget https://github.com/biod/sambamba/releases/download/v0.6.8/sambamba-0.6.8-linux-static.gz && \
     gunzip sambamba-0.6.8-linux-static.gz && mv sambamba-0.6.8-linux-static /bin/sambamba && chmod 755 /bin/sambamba && \
     wget https://github.com/broadinstitute/picard/releases/download/2.18.14/picard.jar -O /bin/picard.jar && chmod +x /bin/picard.jar && \
