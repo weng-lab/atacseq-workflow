@@ -14,9 +14,9 @@ FROM alpine:3.8
 COPY src/ /app
 
 # macs2 binaries and prerequisites
-RUN apk add --no-cache xz-dev bzip2-dev git py3-pip bash build-base zlib-dev python3 python3-dev libstdc++ && \
+RUN apk add --no-cache xz-dev bzip2-dev git py3-pip bash build-base zlib-dev libpng-dev python3 python3-dev libstdc++ && \
     ln -s /usr/bin/python3 /usr/bin/python && \
-    apk add --no-cache mysql-dev libpng-dev linux-headers && \
+    apk add --no-cache mysql-dev linux-headers && \
     git clone https://github.com/weng-lab/kent && \
     cd kent/src/lib && make CFLAGS=-DLIBUUID_NOT_PRESENT && cd ../jkOwnLib && make && cd ../htslib && make && \
     mkdir -p /root/bin/x86_64 && cd ../utils/bedClip && make && cd ../bedGraphToBigWig && make && \
