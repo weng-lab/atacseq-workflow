@@ -32,7 +32,7 @@ data class Macs2Output(
 fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>) = this.task<Macs2Input, Macs2Output>("macs2", i) {
     val params = taskParams<Macs2Params>()
 
-    dockerImage = "genomealmanac/atacseq-macs2:1.0.6"
+    dockerImage = "genomealmanac/atacseq-macs2:1.0.4"
 
     val prefix = "macs2/${input.repName}"
     val npPrefix = "$prefix.pval${params.pvalThresh}.${capNumPeakFilePrefix(params.capNumPeak)}"
@@ -57,7 +57,7 @@ fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>) = this.task<Macs2Input, 
                 --cap-num-peak ${params.capNumPeak} \
                 --pval-thresh ${params.pvalThresh} \
                 --smooth-win ${params.smoothWin} \
-                ${if (params.blacklist != null) "--blacklist ${params.blacklist.dockerPath}" else ""} \     
+               --blacklist \     
                 ${if (params.makeSignal) "--make-signal" else ""} \
                 ${if (input.pairedEnd) "--paired-end" else ""}
             """
