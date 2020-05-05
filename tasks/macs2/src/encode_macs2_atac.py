@@ -31,7 +31,7 @@ def parse_arguments():
                         help='Capping number of peaks by taking top N peaks.')
     parser.add_argument('--make-signal', action="store_true",
                         help='Generate signal tracks for P-Value and fold enrichment.')
-    parser.add_argument('--blacklist', type=str, required=True,
+    parser.add_argument('--blacklist', type=str, 
                         help='Blacklist BED file.')
     parser.add_argument('--out-dir', default='', type=str,
                         help='Output directory.')
@@ -40,7 +40,9 @@ def parse_arguments():
                         choices=['NOTSET','DEBUG','INFO',
                             'WARNING','CRITICAL','ERROR','CRITICAL'],
                         help='Log level')
+                        
     args = parser.parse_args()
+    log.info(args.blacklist)    
     if args.blacklist.endswith('/dev/null'):
         args.blacklist = ''
 
