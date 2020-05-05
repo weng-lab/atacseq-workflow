@@ -57,7 +57,7 @@ fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>) = this.task<Macs2Input, 
                 --cap-num-peak ${params.capNumPeak} \
                 --pval-thresh ${params.pvalThresh} \
                 --smooth-win ${params.smoothWin} \
-               --blacklist \     
+                ${if (params.blacklist != null) "--blacklist ${params.blacklist.dockerPath}" else "--blacklist /dev/null"} \
                 ${if (params.makeSignal) "--make-signal" else ""} \
                 ${if (input.pairedEnd) "--paired-end" else ""}
             """

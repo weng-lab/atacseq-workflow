@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.genomealmanac.atacseq"
-version = "0.1.10"
+version = "0.1.11"
 val artifactID = "atacseq-workflow"
 
 repositories {
