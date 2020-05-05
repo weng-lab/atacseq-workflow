@@ -6,7 +6,7 @@ import org.reactivestreams.Publisher
 
 data class Macs2Params(
         val chrsz: File,
-        val blacklist: File,
+        val blacklist: File?,
         val gensz: String? = null,
         val capNumPeak: Int = 300_000,
         val pvalThresh: Double = 0.01,
@@ -57,7 +57,7 @@ fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>) = this.task<Macs2Input, 
                 --cap-num-peak ${params.capNumPeak} \
                 --pval-thresh ${params.pvalThresh} \
                 --smooth-win ${params.smoothWin} \
-                --blacklist ${params.blacklist.dockerPath} \
+                ${if (params.blacklist != null) "--blacklist ${params.blacklist.dockerPath}" else ""} \     
                 ${if (params.makeSignal) "--make-signal" else ""} \
                 ${if (input.pairedEnd) "--paired-end" else ""}
             """
