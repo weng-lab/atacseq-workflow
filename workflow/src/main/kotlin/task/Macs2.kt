@@ -21,6 +21,7 @@ data class Macs2Input(
 )
 
 data class Macs2Output(
+        val repName: String,
         val npeak: File,
         val bfiltNpeak: File,
         val bfiltNpeakBB: File,
@@ -29,15 +30,17 @@ data class Macs2Output(
         val fripQc: File
 )
 
-fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>) = this.task<Macs2Input, Macs2Output>("macs2", i) {
+fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>, peak: String) = this.task<Macs2Input, Macs2Output>("macs2-$peak", i) {
     val params = taskParams<Macs2Params>()
 
-    dockerImage = "genomealmanac/atacseq-macs2:1.0.4"
+    // FIXME: needs the latest version to be published
+    dockerImage = "genomealmanac/atacseq-macs2:2.0.0"
 
     val prefix = "macs2/${input.repName}"
     val npPrefix = "$prefix.pval${params.pvalThresh}.${capNumPeakFilePrefix(params.capNumPeak)}"
     output =
             Macs2Output(
+                    repName = input.repName,
                     npeak = OutputFile("$npPrefix.narrowPeak.gz"),
                     bfiltNpeak = OutputFile("$npPrefix.bfilt.narrowPeak.gz"),
                     bfiltNpeakBB = OutputFile("$npPrefix.bfilt.narrowPeak.bb"),

@@ -31,7 +31,7 @@ data class Bowtie2Output(
 fun WorkflowBuilder.bowtie2Task(i: Publisher<Bowtie2Input>) = this.task<Bowtie2Input, Bowtie2Output>("bowtie2", i) {
     val params = taskParams<Bowtie2Params>()
 
-    dockerImage = "genomealmanac/atacseq-bowtie2:1.0.4"
+    dockerImage = "genomealmanac/atacseq-bowtie2:2.0.0"
 
     val prefix = "bowtie2/${input.mergedRep.name}"
     output =
