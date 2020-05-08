@@ -8,7 +8,7 @@ import org.reactivestreams.Publisher
 data class Bam2taParams(
         val disableTn5Shift: Boolean,
         val regexGrepVTA: String = "chrM",
-        val regexgreppta: String,
+        val regexgreppta: String? = null,
         val subsample: Int = 0
 )
 
