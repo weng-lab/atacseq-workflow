@@ -5,6 +5,9 @@ import krews.file.File
 interface FastqSamples {
     val replicates: List<FastqReplicate>
 }
+interface MergedFastqSamples {
+    val replicates: List<MergedFastqReplicate>
+}
 
 data class FastqSamplesSE(override val replicates: List<FastqReplicateSE>) : FastqSamples
 data class FastqSamplesPE(override val replicates: List<FastqReplicatePE>) : FastqSamples
