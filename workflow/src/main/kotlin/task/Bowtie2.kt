@@ -3,9 +3,7 @@ package task
 import krews.core.WorkflowBuilder
 import krews.file.File
 import krews.file.OutputFile
-import model.MergedFastqReplicate
-import model.MergedFastqReplicatePE
-import model.MergedFastqReplicateSE
+import model.*
 import org.reactivestreams.Publisher
 
 data class Bowtie2Params(
@@ -14,8 +12,12 @@ data class Bowtie2Params(
         val scoreMin: String? = null
 )
 
+
 data class Bowtie2Input(
-        val mergedRep: MergedFastqReplicate
+        val name: String, 
+        val pairedEnd: Boolean,
+        val mergedR1: File,
+        val mergedR2: File? = null
 )
 
 data class Bowtie2Output(
@@ -28,16 +30,16 @@ data class Bowtie2Output(
         val readLenLog: File
 )
 
-fun WorkflowBuilder.bowtie2Task(i: Publisher<Bowtie2Input>) = this.task<Bowtie2Input, Bowtie2Output>("bowtie2", i) {
+fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this.task<Bowtie2Input, Bowtie2Output>(name, i) {
     val params = taskParams<Bowtie2Params>()
 
     dockerImage = "genomealmanac/atacseq-bowtie2:1.0.4"
 
-    val prefix = "bowtie2/${input.mergedRep.name}"
+    val prefix = "bowtie2/${input.name}"
     output =
             Bowtie2Output(
-                    repName = input.mergedRep.name,
-                    pairedEnd = input.mergedRep is MergedFastqReplicatePE,
+                    repName = input.name,
+                    pairedEnd = input.pairedEnd,
                     bam = OutputFile("$prefix.bam"),
                     bai = OutputFile("$prefix.bam.bai"),
                     alignLog = OutputFile("$prefix.align.log"),
@@ -45,17 +47,17 @@ fun WorkflowBuilder.bowtie2Task(i: Publisher<Bowtie2Input>) = this.task<Bowtie2I
                     readLenLog = OutputFile("$prefix.read_length.txt")
             )
 
-    val mergedRep = input.mergedRep
+    val mergedRep = input
     command =
             """
             /app/encode_bowtie2.py \
                 ${params.idxTar.dockerPath} \
                 --out-dir $outputsDir/bowtie2 \
                 --output-prefix ${mergedRep.name} \
-                ${if (mergedRep is MergedFastqReplicateSE) "--fastq ${mergedRep.merged.dockerPath}" else ""} \
-                ${if (mergedRep is MergedFastqReplicatePE) "--fastq-r1 ${mergedRep.mergedR1.dockerPath}" else ""} \
-                ${if (mergedRep is MergedFastqReplicatePE) "--fastq-r2 ${mergedRep.mergedR2.dockerPath}" else ""} \
-                ${if (mergedRep is MergedFastqReplicatePE) "--paired-end" else ""} \
+                ${if (input.pairedEnd != true) "--fastq ${mergedRep.mergedR1.dockerPath}" else ""} \
+                ${if (input.pairedEnd) "--fastq-r1 ${mergedRep.mergedR1.dockerPath}" else ""} \
+                ${if (input.pairedEnd) "--fastq-r2 ${mergedRep.mergedR2!!.dockerPath}" else ""} \
+                ${if (input.pairedEnd) "--paired-end" else ""} \
                 ${if (params.scoreMin != null) "--score-min ${params.scoreMin}" else ""} \
                 --multimapping ${params.multimapping}
             """

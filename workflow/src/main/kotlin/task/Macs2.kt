@@ -29,7 +29,7 @@ data class Macs2Output(
         val fripQc: File
 )
 
-fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>) = this.task<Macs2Input, Macs2Output>("macs2", i) {
+fun WorkflowBuilder.macs2Task(name: String, i: Publisher<Macs2Input>) = this.task<Macs2Input, Macs2Output>(name, i) {
     val params = taskParams<Macs2Params>()
 
     dockerImage = "genomealmanac/atacseq-macs2:1.0.6"

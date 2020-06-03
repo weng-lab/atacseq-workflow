@@ -24,7 +24,7 @@ data class Bam2taOutput(
         val pairedEnd: Boolean
 )
 
-fun WorkflowBuilder.bam2taTask(i: Publisher<Bam2taInput>) = this.task<Bam2taInput, Bam2taOutput>("bam2ta", i) {
+fun WorkflowBuilder.bam2taTask(name: String,i: Publisher<Bam2taInput>) = this.task<Bam2taInput, Bam2taOutput>(name, i) {
     val params = taskParams<Bam2taParams>()
 
     dockerImage = "genomealmanac/atacseq-bam2ta:1.0.5"
