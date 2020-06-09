@@ -10,4 +10,5 @@ FROM alpine:3.8
 COPY src/ /app
 
 # cutadapt
-RUN apk add --no-cache python python-dev build-base py-pip py-setuptools && pip install cutadapt && apk del py-pip build-base
+RUN apk add --no-cache python3 python3-dev build-base py3-pip py3-setuptools && python3 -m pip install cutadapt && apk del py3-pip build-base 
+

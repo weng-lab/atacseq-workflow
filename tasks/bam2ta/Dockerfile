@@ -12,9 +12,10 @@ FROM alpine:3.8
 COPY src/ /app
 
 # bedtools, sambamba
-RUN apk add --no-cache xz-dev git bash build-base zlib-dev bzip2-dev python libstdc++ && \
+RUN apk add --no-cache xz-dev git bash build-base zlib-dev bzip2-dev python3 libstdc++ && \
+    ln -s /usr/bin/python3 /usr/bin/python && \
     apk add --no-cache --upgrade grep && \
-     git clone https://github.com/arq5x/bedtools2 && cd bedtools2 && make && \
+    git clone https://github.com/arq5x/bedtools2 && cd bedtools2 && make && \
     mv bin/* /bin && cd .. && rm -rf bedtools2 && \
     wget https://github.com/biod/sambamba/releases/download/v0.6.8/sambamba-0.6.8-linux-static.gz && \
     gunzip sambamba-0.6.8-linux-static.gz && mv sambamba-0.6.8-linux-static /bin/sambamba && chmod 755 /bin/sambamba && \
