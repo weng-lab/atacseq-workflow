@@ -36,8 +36,8 @@ data class FilterOutput(
 fun WorkflowBuilder.filterTask(name:String, i: Publisher<FilterInput>) = this.task<FilterInput, FilterOutput>(name, i) {
     val params = taskParams<FilterParams>()
 
-    dockerImage = "genomealmanac/atacseq-filter-alignments:1.0.7"
-
+    dockerImage = "genomealmanac/atacseq-filter-alignments:1.0.10"
+  
     val prefix = "filter/${input.repName}"
     val noDupRemoval = params.noDupRemoval
     output =
