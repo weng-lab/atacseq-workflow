@@ -133,10 +133,10 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
         // type, and group by the condition.
 
         val idrInput = Flux.merge(
-                poolTaOutput.map { IdrInputValue(it.repName, pooledTa = it.pooledTa) },
-                macs2CombinedOutput.map { IdrInputValue(it.first, peaks = it.second) },
-                macs2PrOutput.map { IdrInputValue(it.repName, pooledPeaks = it.npeak)}
-            )
+            poolTaOutput.map { IdrInputValue(it.repName, pooledTa = it.pooledTa) },
+            macs2CombinedOutput.map { IdrInputValue(it.first, peaks = it.second) },
+            macs2PrOutput.map { IdrInputValue(it.repName, pooledPeaks = it.npeak) }
+        )
             .groupBy { it.repName }
             .flatMap { it.collectList() }
             .map {
@@ -151,7 +151,7 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
                         if (pooledTa != null) throw Exception("Too many pooled tas.")
                         pooledTa = i.pooledTa
                     }
-                    if (i.peaks != null)
+                    if (i.peaks != null) {
                         if (peaks != null) throw Exception("Too many peaks.")
                         peaks = i.peaks
                     }
