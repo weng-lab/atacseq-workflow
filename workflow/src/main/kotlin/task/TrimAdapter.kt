@@ -2,6 +2,7 @@ package task
 
 import krews.core.WorkflowBuilder
 import krews.file.OutputFile
+import krews.file.File
 import model.*
 import org.reactivestreams.Publisher
 
@@ -11,30 +12,30 @@ data class TrimAdapterParams(
 )
 
 data class TrimAdapterInput(
-        val rep: FastqReplicate
+        val rep: Replicate
 )
 
 data class TrimAdapterOutput(
-        val mergedReplicate: MergedFastqReplicate
+        val name: String,
+        val pairedEnd: Boolean,
+        val mergedR1: File,        
+        val mergedR2: File?
 )
 
-fun WorkflowBuilder.trimAdapterTask(i: Publisher<TrimAdapterInput>) = this.task<TrimAdapterInput, TrimAdapterOutput>("trim-adapter", i) {
+fun WorkflowBuilder.trimAdapterTask(name: String, i: Publisher<TrimAdapterInput>) = this.task<TrimAdapterInput, TrimAdapterOutput>(name, i) {
     val params = taskParams<TrimAdapterParams>()
 
-    dockerImage = "genomealmanac/atacseq-trim-adapters:1.0.6"
+    dockerImage = "genomealmanac/atacseq-trim-adapters:1.0.8"
 
     val rep = input.rep
     output =
             if (input.rep is FastqReplicateSE) {
-                val merged = MergedFastqReplicateSE(name = rep.name, merged = OutputFile("trim/${rep.name}.merged.fastq.gz"))
-                TrimAdapterOutput(merged)
+                TrimAdapterOutput(name = rep.name,pairedEnd = false, mergedR1 = OutputFile("trim/${rep.name}.merged.fastq.gz"), mergedR2 = null)
             } else {
-                val merged = MergedFastqReplicatePE(
-                        name = rep.name,
+                TrimAdapterOutput( name = rep.name, pairedEnd = true,
                         mergedR1 = OutputFile("trim/${rep.name}.R1.merged.fastq.gz"),
                         mergedR2 = OutputFile("trim/${rep.name}.R2.merged.fastq.gz")
-                )
-                TrimAdapterOutput(merged)
+                       )
             }
 
     val detectAdaptor = (rep is FastqReplicateSE && rep.adaptor == null) ||

@@ -6,7 +6,7 @@ import org.reactivestreams.Publisher
 
 data class Macs2Params(
         val chrsz: File,
-        val blacklist: File,
+        val blacklist: File?,
         val gensz: String? = null,
         val capNumPeak: Int = 300_000,
         val pvalThresh: Double = 0.01,
@@ -32,8 +32,7 @@ data class Macs2Output(
 
 fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>, peak: String) = this.task<Macs2Input, Macs2Output>("macs2-$peak", i) {
     val params = taskParams<Macs2Params>()
-
-    // FIXME: needs the latest version to be published
+  
     dockerImage = "genomealmanac/atacseq-macs2:2.0.0"
 
     val prefix = "macs2/${input.repName}"
@@ -60,7 +59,7 @@ fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>, peak: String) = this.tas
                 --cap-num-peak ${params.capNumPeak} \
                 --pval-thresh ${params.pvalThresh} \
                 --smooth-win ${params.smoothWin} \
-                --blacklist ${params.blacklist.dockerPath} \
+                ${if (params.blacklist != null) "--blacklist ${params.blacklist.dockerPath}" else "--blacklist /dev/null"} \
                 ${if (params.makeSignal) "--make-signal" else ""} \
                 ${if (input.pairedEnd) "--paired-end" else ""}
             """

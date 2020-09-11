@@ -33,11 +33,10 @@ data class FilterOutput(
         val mitoDupLog: File?
 )
 
-fun WorkflowBuilder.filterTask(i: Publisher<FilterInput>) = this.task<FilterInput, FilterOutput>("filter-alignments", i) {
+fun WorkflowBuilder.filterTask(name:String, i: Publisher<FilterInput>) = this.task<FilterInput, FilterOutput>(name, i) {
     val params = taskParams<FilterParams>()
 
     dockerImage = "genomealmanac/filter-alignments:2.0.0"
-
     val prefix = "filter/${input.repName}"
     val noDupRemoval = params.noDupRemoval
     output =

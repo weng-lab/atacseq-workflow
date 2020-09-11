@@ -19,6 +19,8 @@ def parse_arguments():
                         help='Disable TN5 shifting for DNase-Seq.')
     parser.add_argument("--output-prefix", type = str, default = 'output',
                         help = "output file name prefix; defaults to 'output'")
+    parser.add_argument('--regex-grep-p-ta', type = str,
+                        help='Pattern to keep matching reads from TAGALIGN.')                        
     parser.add_argument('--regex-grep-v-ta', default='chrM',
                         help='Pattern to remove matching reads from TAGALIGN.')
     parser.add_argument('--subsample', type=int, default=0,
@@ -38,14 +40,16 @@ def parse_arguments():
     log.info(sys.argv)
     return args
 
-def bam2ta_se(bam, regex_grep_v_ta, out_dir, prefix = "output"):
+def bam2ta_se(bam, regex_grep_v_ta,regex_grep_p_ta, out_dir, prefix = "output"):
     prefix = os.path.join(out_dir, prefix)
     ta = '{}.se.tagAlign.gz'.format(prefix)
 
     cmd = 'bedtools bamtobed -i {} | '
-    cmd += 'awk \'BEGIN{{OFS="\\t"}}{{$4="N";$5="1000";print $0}}\' | '
-    if regex_grep_v_ta:
-        cmd += 'grep -v \'{}\' |'.format(regex_grep_v_ta)
+    cmd += 'awk \'BEGIN{{OFS="\\t"}}{{$4="N";$5="1000";print $0}}\' | '    
+    if regex_grep_p_ta:
+        cmd += 'grep -P \'{}\' | '.format(regex_grep_p_ta)        
+    else:
+        cmd += 'grep -vP \'{}\' | '.format(regex_grep_v_ta)     
     cmd += 'gzip -nc > {}'
     cmd = cmd.format(
         bam,
@@ -53,7 +57,7 @@ def bam2ta_se(bam, regex_grep_v_ta, out_dir, prefix = "output"):
     run_shell_cmd(cmd)
     return ta
 
-def bam2ta_pe(bam, regex_grep_v_ta, nth, out_dir, prefix = "output"):
+def bam2ta_pe(bam, regex_grep_v_ta,regex_grep_p_ta, nth, out_dir, prefix = "output"):
     prefix = os.path.join(out_dir, prefix)
     ta = '{}.tagAlign.gz'.format(prefix)
     # intermediate files
@@ -75,8 +79,10 @@ def bam2ta_pe(bam, regex_grep_v_ta, nth, out_dir, prefix = "output"):
     cmd2 += '{{printf "%s\\t%s\\t%s\\tN\\t1000\\t%s\\n'
     cmd2 += '%s\\t%s\\t%s\\tN\\t1000\\t%s\\n",'
     cmd2 += '$1,$2,$3,$9,$4,$5,$6,$10}}\' | '
-    if regex_grep_v_ta:
-        cmd2 += 'grep -v \'{}\' | '.format(regex_grep_v_ta)
+    if regex_grep_p_ta:
+        cmd2 += 'grep -P \'{}\' | '.format(regex_grep_p_ta)           
+    else:
+        cmd2 += 'grep -vP \'{}\' | '.format(regex_grep_v_ta)    
     cmd2 += 'gzip -nc > {}'
     cmd2 = cmd2.format(
         bedpe,
@@ -112,11 +118,11 @@ def main():
     num_cpus = multiprocessing.cpu_count()
 
     log.info('Converting BAM to TAGALIGN...')
-    ta = bam2ta_se(args.bam, args.regex_grep_v_ta,
+    ta = bam2ta_se(args.bam, args.regex_grep_v_ta,args.regex_grep_p_ta,
                    args.out_dir, args.output_prefix)
     if args.paired_end:
         seta = ta
-        ta = bam2ta_pe(args.bam, args.regex_grep_v_ta,
+        ta = bam2ta_pe(args.bam, args.regex_grep_v_ta,args.regex_grep_p_ta,
                         num_cpus, args.out_dir, args.output_prefix)
 
     if args.subsample:
