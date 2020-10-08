@@ -7,11 +7,11 @@ import org.reactivestreams.Publisher
 data class IdrParams(
         val chrsz: File,
         val blacklist: File,
-        val idrThreshold: Double = 0.01,
-        val fraglen: Int
+        val idrThreshold: Double = 0.05
 )
 
 data class IdrInput(
+        val exp: String,
         val repName: String,
         val peaks1: File,
         val peaks2: File,
@@ -30,12 +30,12 @@ data class IdrOutput(
         val idrUnthresholdedPeak: File
 )
 
-fun WorkflowBuilder.idrTask(i: Publisher<IdrInput>) = this.task<IdrInput, IdrOutput>("idr", i) {
+fun WorkflowBuilder.idrTask(i: Publisher<IdrInput>, peak: String) = this.task<IdrInput, IdrOutput>("idr-$peak", i, "idr") {
     val params = taskParams<IdrParams>()
 
-    dockerImage = "genomealmanac/chipseq-idr:v1.0.5"
+    dockerImage = "genomealmanac/chipseq-idr:v1.0.6"
 
-    val prefix = "${input.repName}"
+    val prefix = "${input.exp}.${input.repName}"
     val nPrefix = "idr/$prefix.idr${params.idrThreshold}"
     output =
             IdrOutput(

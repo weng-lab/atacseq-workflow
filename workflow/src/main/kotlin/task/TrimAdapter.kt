@@ -12,11 +12,13 @@ data class TrimAdapterParams(
 )
 
 data class TrimAdapterInput(
+        val exp: String,
         val rep: Replicate
 )
 
 data class TrimAdapterOutput(
-        val name: String,
+        val exp: String,
+        val repName: String,
         val pairedEnd: Boolean,
         val mergedR1: File,        
         val mergedR2: File?
@@ -30,12 +32,21 @@ fun WorkflowBuilder.trimAdapterTask(name: String, i: Publisher<TrimAdapterInput>
     val rep = input.rep
     output =
             if (input.rep is FastqReplicateSE) {
-                TrimAdapterOutput(name = rep.name,pairedEnd = false, mergedR1 = OutputFile("trim/${rep.name}.merged.fastq.gz"), mergedR2 = null)
+                TrimAdapterOutput(
+                        exp = input.exp,
+                        repName = rep.name,
+                        pairedEnd = false,
+                        mergedR1 = OutputFile("trim/${input.exp}.${rep.name}.merged.fastq.gz"),
+                        mergedR2 = null
+                )
             } else {
-                TrimAdapterOutput( name = rep.name, pairedEnd = true,
-                        mergedR1 = OutputFile("trim/${rep.name}.R1.merged.fastq.gz"),
-                        mergedR2 = OutputFile("trim/${rep.name}.R2.merged.fastq.gz")
-                       )
+                TrimAdapterOutput(
+                        exp = input.exp,
+                        repName = rep.name,
+                        pairedEnd = true,
+                        mergedR1 = OutputFile("trim/${input.exp}.${rep.name}.R1.merged.fastq.gz"),
+                        mergedR2 = OutputFile("trim/${input.exp}.${rep.name}.R2.merged.fastq.gz")
+                )
             }
 
     val detectAdaptor = (rep is FastqReplicateSE && rep.adaptor == null) ||
@@ -44,7 +55,7 @@ fun WorkflowBuilder.trimAdapterTask(name: String, i: Publisher<TrimAdapterInput>
             """
             /app/encode_trim_adapter.py \
                 --out-dir $outputsDir/trim \
-                --output-prefix ${rep.name} \
+                --output-prefix ${input.exp}.${rep.name} \
                 ${if (rep is FastqReplicateSE) "--fastqs ${rep.fastqs.joinToString(" ") { it.dockerPath }}" else ""} \
                 ${if (rep is FastqReplicateSE && !detectAdaptor) "--adapter ${rep.adaptor!!.dockerPath}" else ""} \
                 ${if (rep is FastqReplicatePE) "--fastqs-r1 ${rep.fastqsR1.joinToString(" ") { it.dockerPath }}" else ""} \

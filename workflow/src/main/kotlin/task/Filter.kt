@@ -17,12 +17,14 @@ data class FilterParams(
 )
 
 data class FilterInput(
+        val exp: String,
         val bam: File,
         val repName: String,
         val pairedEnd: Boolean
 )
 
 data class FilterOutput(
+        val exp: String,
         val repName: String,
         val pairedEnd: Boolean,
         val bam: File,
@@ -37,10 +39,11 @@ fun WorkflowBuilder.filterTask(name:String, i: Publisher<FilterInput>) = this.ta
     val params = taskParams<FilterParams>()
 
     dockerImage = "genomealmanac/filter-alignments:2.0.0"
-    val prefix = "filter/${input.repName}"
+    val prefix = "filter/${input.exp}.${input.repName}"
     val noDupRemoval = params.noDupRemoval
     output =
             FilterOutput(
+                    exp = input.exp,
                     repName = input.repName,
                     pairedEnd = input.pairedEnd,
                     bam = if (noDupRemoval) OutputFile("$prefix.filt.bam") else OutputFile("$prefix.nodup.bam"),
@@ -56,7 +59,7 @@ fun WorkflowBuilder.filterTask(name:String, i: Publisher<FilterInput>) = this.ta
         /app/encode_filter.py \
             ${input.bam.dockerPath} \
             --out-dir $outputsDir/filter \
-            --output-prefix ${input.repName} \
+            --output-prefix ${input.exp}.${input.repName} \
             ${if (input.pairedEnd) "--paired-end" else ""} \
             --multimapping ${params.multimapping} \
             --dup-marker ${params.dupMarker.name.toLowerCase()} \

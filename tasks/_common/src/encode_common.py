@@ -198,13 +198,14 @@ def pdf2png(pdf, out_dir):
     run_shell_cmd(cmd)
     return png
 
-def run_shell_cmd(cmd): 
+def run_shell_cmd(cmd, executable=None): 
     try:
         p = subprocess.Popen(cmd, shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             universal_newlines=True,
-            preexec_fn=os.setsid)
+            preexec_fn=os.setsid,
+            executable=executable)
         pid = p.pid
         pgid = os.getpgid(pid)
         log.info('run_shell_cmd: PID={}, CMD={}'.format(pid, cmd))

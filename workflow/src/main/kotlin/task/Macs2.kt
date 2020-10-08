@@ -15,12 +15,14 @@ data class Macs2Params(
 )
 
 data class Macs2Input(
+        val exp: String,
         val ta: File,
         val repName: String,
         val pairedEnd: Boolean
 )
 
 data class Macs2Output(
+        val exp: String,
         val repName: String,
         val npeak: File,
         val bfiltNpeak: File,
@@ -30,15 +32,16 @@ data class Macs2Output(
         val fripQc: File
 )
 
-fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>, peak: String) = this.task<Macs2Input, Macs2Output>("macs2-$peak", i) {
+fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>, peak: String) = this.task<Macs2Input, Macs2Output>("macs2-$peak", i, "macs2") {
     val params = taskParams<Macs2Params>()
   
-    dockerImage = "genomealmanac/atacseq-macs2:2.0.0"
+    dockerImage = "genomealmanac/atacseq-macs2:2.1.0"
 
-    val prefix = "macs2/${input.repName}"
+    val prefix = "macs2/${input.exp}.${input.repName}"
     val npPrefix = "$prefix.pval${params.pvalThresh}.${capNumPeakFilePrefix(params.capNumPeak)}"
     output =
             Macs2Output(
+                    exp = input.exp,
                     repName = input.repName,
                     npeak = OutputFile("$npPrefix.narrowPeak.gz"),
                     bfiltNpeak = OutputFile("$npPrefix.bfilt.narrowPeak.gz"),
@@ -53,7 +56,7 @@ fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>, peak: String) = this.tas
             /app/encode_macs2_atac.py \
                 ${input.ta.dockerPath} \
                 --out-dir $outputsDir/macs2 \
-                --output-prefix ${input.repName} \
+                --output-prefix ${input.exp}.${input.repName} \
                 ${if (params.gensz != null) "--gensz ${params.gensz}" else ""} \
                 --chrsz ${params.chrsz.dockerPath} \
                 --cap-num-peak ${params.capNumPeak} \

@@ -5,5 +5,6 @@ interface Replicate {
 }
 
 data class Experiment (
+    val name: String,
     val replicates: List<Replicate>
 )

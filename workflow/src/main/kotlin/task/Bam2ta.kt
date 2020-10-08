@@ -13,12 +13,14 @@ data class Bam2taParams(
 )
 
 data class Bam2taInput(
+        val exp: String,
         val bam: File,
         val repName: String,
         val pairedEnd: Boolean
 )
 
 data class Bam2taOutput(
+        val exp: String,
         val ta: File,
         val repName: String,
         val pairedEnd: Boolean
@@ -29,9 +31,11 @@ fun WorkflowBuilder.bam2taTask(name: String,i: Publisher<Bam2taInput>) = this.ta
 
     dockerImage = "genomealmanac/atacseq-bam2ta:v2.0.1"
 
+    val prefix = "bam2ta/${input.exp}.${input.repName}"
     output =
             Bam2taOutput(
-                    ta = OutputFile("bam2ta/${input.repName}.tn5.tagAlign.gz"),
+                    exp = input.exp,
+                    ta = OutputFile("$prefix.tn5.tagAlign.gz"),
                     repName = input.repName,
                     pairedEnd = input.pairedEnd
             )
@@ -41,7 +45,7 @@ fun WorkflowBuilder.bam2taTask(name: String,i: Publisher<Bam2taInput>) = this.ta
             /app/encode_bam2ta.py \
                 ${input.bam.dockerPath} \
                 --out-dir $outputsDir/bam2ta \
-                --output-prefix ${input.repName} \
+                --output-prefix ${input.exp}.${input.repName} \
                 ${if (input.pairedEnd) "--paired-end" else ""} \
                 ${if (params.disableTn5Shift) "--disable-tn5-shift" else ""} \
                 ${if (params.regexgreppta != null) "--regex-grep-p-ta ${params.regexgreppta}" else ""} \

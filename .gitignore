@@ -25,3 +25,5 @@ Thumbs.db
 .project
 
 .gradle/
+
+.vscode/

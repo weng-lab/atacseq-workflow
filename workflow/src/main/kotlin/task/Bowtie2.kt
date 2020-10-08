@@ -14,13 +14,15 @@ data class Bowtie2Params(
 
 
 data class Bowtie2Input(
-        val name: String, 
+        val exp: String,
+        val repName: String,
         val pairedEnd: Boolean,
         val mergedR1: File,
         val mergedR2: File? = null
 )
 
 data class Bowtie2Output(
+        val exp: String,
         val repName: String,
         val pairedEnd: Boolean,
         val bam: File,
@@ -35,10 +37,11 @@ fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this
 
     dockerImage = "genomealmanac/atacseq-bowtie2:2.0.0"
 
-    val prefix = "bowtie2/${input.name}"
+    val prefix = "bowtie2/${input.exp}.${input.repName}"
     output =
             Bowtie2Output(
-                    repName = input.name,
+                    exp = input.exp,
+                    repName = input.repName,
                     pairedEnd = input.pairedEnd,
                     bam = OutputFile("$prefix.bam"),
                     bai = OutputFile("$prefix.bam.bai"),
@@ -47,16 +50,15 @@ fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this
                     readLenLog = OutputFile("$prefix.read_length.txt")
             )
 
-    val mergedRep = input
     command =
             """
             /app/encode_bowtie2.py \
                 ${params.idxTar.dockerPath} \
                 --out-dir $outputsDir/bowtie2 \
-                --output-prefix ${mergedRep.name} \
-                ${if (input.pairedEnd != true) "--fastq ${mergedRep.mergedR1.dockerPath}" else ""} \
-                ${if (input.pairedEnd) "--fastq-r1 ${mergedRep.mergedR1.dockerPath}" else ""} \
-                ${if (input.pairedEnd) "--fastq-r2 ${mergedRep.mergedR2!!.dockerPath}" else ""} \
+                --output-prefix ${input.exp}.${input.repName} \
+                ${if (input.pairedEnd != true) "--fastq ${input.mergedR1.dockerPath}" else ""} \
+                ${if (input.pairedEnd) "--fastq-r1 ${input.mergedR1.dockerPath}" else ""} \
+                ${if (input.pairedEnd) "--fastq-r2 ${input.mergedR2!!.dockerPath}" else ""} \
                 ${if (input.pairedEnd) "--paired-end" else ""} \
                 ${if (params.scoreMin != null) "--score-min ${params.scoreMin}" else ""} \
                 --multimapping ${params.multimapping}
