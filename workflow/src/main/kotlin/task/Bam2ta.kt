@@ -6,7 +6,7 @@ import krews.file.OutputFile
 import org.reactivestreams.Publisher
 
 data class Bam2taParams(
-        val disableTn5Shift: Boolean,
+        val disableTn5Shift: Boolean = false,
         val regexGrepVTA: String = "chrM",
         val regexgreppta: String? = null,
         val subsample: Int = 0

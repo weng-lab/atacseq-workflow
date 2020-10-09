@@ -3,10 +3,16 @@
 # scripts from github.com/ENCODE-DCC/atac-seq-pipeline#86ed2d2
 #
 
+
+FROM atacseq-common:1.0.0 as common
+
 FROM anapsix/alpine-java:latest
 
 # scripts
 COPY src/ /app
+
+# common scripts
+COPY --from=common /app/common /app/common
 
 # Picard jar and sambamba
 RUN apk add --no-cache xz-dev bzip2-dev wget build-base python zlib-dev git && \

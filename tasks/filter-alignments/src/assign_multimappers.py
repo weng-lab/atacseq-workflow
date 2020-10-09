@@ -1,5 +1,7 @@
 #!/usr/bin/env python2
 
+# Copied 0a69b767064edf7b0edc7af4aaabb09e0fc23b3d
+
 # piped script to take multimappers and randomly assign
 # requires a qname sorted file!!
 
@@ -7,13 +9,16 @@ import sys
 import random
 import argparse
 
+
 def parse_args():
     '''
     Gives options
     '''
-    parser = argparse.ArgumentParser(description='Saves reads below a alignment threshold and discards all others')
+    parser = argparse.ArgumentParser(
+        description='Saves reads below a alignment threshold and discards all others')
     parser.add_argument('-k', help='Alignment number cutoff')
-    parser.add_argument('--paired-end', dest='paired_ended', action='store_true', help='Data is paired-end')
+    parser.add_argument('--paired-end', dest='paired_ended',
+                        action='store_true', help='Data is paired-end')
     args = parser.parse_args()
     alignment_cutoff = int(args.k)
     paired_ended = args.paired_ended
@@ -31,10 +36,10 @@ if __name__ == "__main__":
     if paired_ended:
         alignment_cutoff = int(alignment_cutoff) * 2
 
-    # Store each line in sam file as a list of reads, 
-    # where each read is a list of elements to easily 
+    # Store each line in sam file as a list of reads,
+    # where each read is a list of elements to easily
     # modify or grab things
-    current_reads = [] 
+    current_reads = []
     current_qname = ''
 
     for line in sys.stdin:
@@ -52,7 +57,7 @@ if __name__ == "__main__":
             pass
         else:
             # Discard if there are more than the alignment cutoff
-            if len(current_reads) >= alignment_cutoff:
+            if len(current_reads) > alignment_cutoff:
                 current_reads = [line]
                 current_qname = read_elems[0]
             elif len(current_reads) > 0:
@@ -68,6 +73,3 @@ if __name__ == "__main__":
                 # First read in file
                 current_reads.append(line)
                 current_qname = read_elems[0]
-
-
-

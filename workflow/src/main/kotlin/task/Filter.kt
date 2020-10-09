@@ -10,10 +10,15 @@ enum class FilterDupMarker {
 }
 
 data class FilterParams(
-        val multimapping: Int = 0,
-        val mapqThresh: Int = 30,
+        val multimapping: Int = 4,
         val dupMarker: FilterDupMarker = FilterDupMarker.PICARD,
-        val noDupRemoval: Boolean = false
+        val mapqThresh: Int = 30,
+        val filterChrs: List<String> = listOf("chrM", "MT"),
+        val noDupRemoval: Boolean = false,
+        val mitoChrName: String = "chrM",
+        val memGb: Int = 8,
+        val nth: Int = 4,
+        val chrsz: File
 )
 
 data class FilterInput(
@@ -38,7 +43,7 @@ data class FilterOutput(
 fun WorkflowBuilder.filterTask(name:String, i: Publisher<FilterInput>) = this.task<FilterInput, FilterOutput>(name, i) {
     val params = taskParams<FilterParams>()
 
-    dockerImage = "genomealmanac/filter-alignments:2.0.0"
+    dockerImage = "genomealmanac/atacseq-filter-alignments:2.0.0"
     val prefix = "filter/${input.exp}.${input.repName}"
     val noDupRemoval = params.noDupRemoval
     output =
@@ -56,14 +61,18 @@ fun WorkflowBuilder.filterTask(name:String, i: Publisher<FilterInput>) = this.ta
 
     command =
         """
-        /app/encode_filter.py \
+        /app/encode_task_filter.py \
             ${input.bam.dockerPath} \
-            --out-dir $outputsDir/filter \
-            --output-prefix ${input.exp}.${input.repName} \
             ${if (input.pairedEnd) "--paired-end" else ""} \
             --multimapping ${params.multimapping} \
             --dup-marker ${params.dupMarker.name.toLowerCase()} \
             --mapq-thresh ${params.mapqThresh} \
+            --filter-chrs ${params.filterChrs.joinToString(" ") { it }} \
+            --chrsz ${params.chrsz.dockerPath} \
             ${if (params.noDupRemoval) "--no-dup-removal" else ""}
+            --mito-chr-name ${params.mitoChrName} \
+            --mem-gb ${params.memGb} \
+            --nth ${params.nth} \
+            --picard-java-heap ${params.memGb}G
         """
 }
