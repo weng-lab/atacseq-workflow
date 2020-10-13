@@ -9,7 +9,9 @@ import org.reactivestreams.Publisher
 data class Bowtie2Params(
         val idxTar: File,
         val multimapping: Int? = 4,
-        val scoreMin: String? = null
+        val scoreMin: String? = null,
+        val memGb: Int = 8,
+        val nth: Int = 4
 )
 
 
@@ -35,7 +37,7 @@ data class Bowtie2Output(
 fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this.task<Bowtie2Input, Bowtie2Output>(name, i) {
     val params = taskParams<Bowtie2Params>()
 
-    dockerImage = "genomealmanac/atacseq-bowtie2:2.0.0"
+    dockerImage = "genomealmanac/atacseq-bowtie2:1.1.0"
 
     val prefix = "bowtie2/${input.exp}.${input.repName}"
     output =
@@ -52,15 +54,13 @@ fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this
 
     command =
             """
-            /app/encode_bowtie2.py \
+            /app/encode_task_bowtie2.py \
                 ${params.idxTar.dockerPath} \
-                --out-dir $outputsDir/bowtie2 \
-                --output-prefix ${input.exp}.${input.repName} \
-                ${if (input.pairedEnd != true) "--fastq ${input.mergedR1.dockerPath}" else ""} \
-                ${if (input.pairedEnd) "--fastq-r1 ${input.mergedR1.dockerPath}" else ""} \
-                ${if (input.pairedEnd) "--fastq-r2 ${input.mergedR2!!.dockerPath}" else ""} \
+                ${input.mergedR1.dockerPath} \
+                ${if (input.pairedEnd) "${input.mergedR2!!.dockerPath}" else ""} \
                 ${if (input.pairedEnd) "--paired-end" else ""} \
-                ${if (params.scoreMin != null) "--score-min ${params.scoreMin}" else ""} \
-                --multimapping ${params.multimapping}
+                --multimapping ${params.multimapping} \
+                --mem-gb ${params.memGb} \
+                --nth ${params.nth}
             """
 }

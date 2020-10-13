@@ -4,10 +4,15 @@
 # encode_common modified to mv files rather than hard link
 #
 
+FROM atacseq-common:1.0.0 as common
+
 FROM frolvlad/alpine-glibc
 
 # scripts
 COPY src/ /app
+
+# common scripts
+COPY --from=common /app/common /app/common
 
 # bowtie2 and samtools
 RUN apk add --no-cache wget unzip python3 perl zlib-dev build-base libstdc++ python3-dev py3-setuptools && \
