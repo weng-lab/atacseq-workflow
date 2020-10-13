@@ -7,8 +7,8 @@ import model.*
 import org.reactivestreams.Publisher
 
 data class TrimAdapterParams(
-        val minTrimLen: Int = 5,
-        val errRate: Double = 0.1
+        val cutAdaptParam: String = "-e 0.1 -m 5",
+        val nth: Int = 4
 )
 
 data class TrimAdapterInput(
@@ -27,7 +27,7 @@ data class TrimAdapterOutput(
 fun WorkflowBuilder.trimAdapterTask(name: String, i: Publisher<TrimAdapterInput>) = this.task<TrimAdapterInput, TrimAdapterOutput>(name, i) {
     val params = taskParams<TrimAdapterParams>()
 
-    dockerImage = "genomealmanac/atacseq-trim-adapters:1.0.8"
+    dockerImage = "genomealmanac/atacseq-trim-adapters:1.1.0"
 
     val rep = input.rep
     output =
@@ -49,22 +49,34 @@ fun WorkflowBuilder.trimAdapterTask(name: String, i: Publisher<TrimAdapterInput>
                 )
             }
 
-    val detectAdaptor = (rep is FastqReplicateSE && rep.adaptor == null) ||
-            (rep is FastqReplicatePE && (rep.adaptorR1 == null || rep.adaptorR2 == null))
+    val fastqs = if (rep is FastqReplicatePE) {
+        rep.fastqsR1.zip(rep.fastqsR2).joinToString(" ") { it.toList().joinToString(",") { it.dockerPath } }
+    } else if (rep is FastqReplicateSE) {
+        rep.fastqs.joinToString(" ")
+    } else {
+        throw IllegalArgumentException("Expected PE or SE")
+    }
+    val adapters: String? = if (rep is FastqReplicatePE) {
+        rep.adaptorR1?.let { r1 ->
+            rep.adaptorR2?.let { r2 ->
+                "${r1.dockerPath} ${r2.dockerPath}"
+            }
+        }
+    } else if (rep is FastqReplicateSE) {
+        rep.adaptor?.let {
+            it.dockerPath
+        }
+    } else {
+        throw IllegalArgumentException("Expected PE or SE")
+    }
     command =
             """
-            /app/encode_trim_adapter.py \
-                --out-dir $outputsDir/trim \
-                --output-prefix ${input.exp}.${rep.name} \
-                ${if (rep is FastqReplicateSE) "--fastqs ${rep.fastqs.joinToString(" ") { it.dockerPath }}" else ""} \
-                ${if (rep is FastqReplicateSE && !detectAdaptor) "--adapter ${rep.adaptor!!.dockerPath}" else ""} \
-                ${if (rep is FastqReplicatePE) "--fastqs-r1 ${rep.fastqsR1.joinToString(" ") { it.dockerPath }}" else ""} \
-                ${if (rep is FastqReplicatePE) "--fastqs-r2 ${rep.fastqsR2.joinToString(" ") { it.dockerPath }}" else ""} \
-                ${if (rep is FastqReplicatePE && !detectAdaptor) "--adapter-r1 ${rep.adaptorR1!!.dockerPath}" else ""} \
-                ${if (rep is FastqReplicatePE && !detectAdaptor) "--adapter-r2 ${rep.adaptorR2!!.dockerPath}" else ""} \
+            /app/encode_task_trim_adapter.py \
+                ${fastqs}
+                --adapters ${if (adapters != null) adapters else ""} \
                 ${if (rep is FastqReplicatePE) "--paired-end" else ""} \
-                ${if (detectAdaptor) "--auto-detect-adapter" else ""} \
-                --min-trim-len ${params.minTrimLen} \
-                --err-rate ${params.errRate}
+                ${if (adapters != null) "--auto-detect-adapter" else ""} \
+                --cutadapt-param ' ${params.cutAdaptParam}' \
+                --nth ${params.nth}
             """
 }

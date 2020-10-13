@@ -1,5 +1,7 @@
 # written by Nathan Boley, from https://github.com/nboley/GGR_code
 
+# Copied 0a69b767064edf7b0edc7af4aaabb09e0fc23b3d
+
 import sys
 import gzip
 
@@ -11,6 +13,11 @@ adapters = {
     'smallRNA': b'TGGAATTCTCGG'
 }
 
+
+def open_gz(fname):
+    return gzip.open(fname) if fname.endswith('.gz') else open(fname, 'rb')
+
+
 def detect_adapters_and_cnts(fname, max_n_lines=1000000):
     adapter_cnts = {
         'Illumina': 0,
@@ -18,13 +25,15 @@ def detect_adapters_and_cnts(fname, max_n_lines=1000000):
         'smallRNA': 0
     }
 
-    with gzip.open(fname) as fp:
+    with open_gz(fname) as fp:
         # read the first million sequences or to the end of the while -- whichever
         # comes first, and then use the adapter for trimming which was found to
         # occur most often
         for seq_index, line in enumerate(fp):
-            if seq_index >= max_n_lines: break
-            if seq_index%4 != 1: continue
+            if seq_index >= max_n_lines:
+                break
+            if seq_index % 4 != 1:
+                continue
             for key in adapters:
                 if line.find(adapters[key]) > -1:
                     adapter_cnts[key] += 1
@@ -36,8 +45,10 @@ def detect_adapters_and_cnts(fname, max_n_lines=1000000):
     ]
     return observed_adapters, adapter_cnts, seq_index//4
 
+
 def detect_most_likely_adapter(fname):
-    observed_adapters, adapter_cnts, n_obs_adapters = detect_adapters_and_cnts(fname)
+    observed_adapters, adapter_cnts, n_obs_adapters = detect_adapters_and_cnts(
+        fname)
     if observed_adapters:
         best_adapter = observed_adapters[0]
     else:
@@ -63,11 +74,13 @@ def detect_most_likely_adapter(fname):
     else:
         return ""
 
+
 def main():
     global VERBOSE
-    VERBOSE = True
+    VERBOSE = False
     best_adapter = detect_most_likely_adapter(sys.argv[1])
     print(best_adapter)
+
 
 if __name__ == '__main__':
     main()
