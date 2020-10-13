@@ -7,9 +7,10 @@ import org.reactivestreams.Publisher
 
 data class Bam2taParams(
         val disableTn5Shift: Boolean = false,
-        val regexGrepVTA: String = "chrM",
-        val regexgreppta: String? = null,
-        val subsample: Int = 0
+        val mitoChromName: String = "chrM",
+        val subsample: Int = 0,
+        val memGb: Int = 8,
+        val nth: Int = 2
 )
 
 data class Bam2taInput(
@@ -29,7 +30,7 @@ data class Bam2taOutput(
 fun WorkflowBuilder.bam2taTask(name: String,i: Publisher<Bam2taInput>) = this.task<Bam2taInput, Bam2taOutput>(name, i) {
     val params = taskParams<Bam2taParams>()
 
-    dockerImage = "genomealmanac/atacseq-bam2ta:v2.0.1"
+    dockerImage = "genomealmanac/atacseq-bam2ta:v1.1.0"
 
     val prefix = "bam2ta/${input.exp}.${input.repName}"
     output =
@@ -44,12 +45,11 @@ fun WorkflowBuilder.bam2taTask(name: String,i: Publisher<Bam2taInput>) = this.ta
             """
             /app/encode_bam2ta.py \
                 ${input.bam.dockerPath} \
-                --out-dir $outputsDir/bam2ta \
-                --output-prefix ${input.exp}.${input.repName} \
                 ${if (input.pairedEnd) "--paired-end" else ""} \
                 ${if (params.disableTn5Shift) "--disable-tn5-shift" else ""} \
-                ${if (params.regexgreppta != null) "--regex-grep-p-ta ${params.regexgreppta}" else ""} \
-                --regex-grep-v-ta ${params.regexGrepVTA} \
-                --subsample ${params.subsample}
+                --mito-chr-name ${params.mitoChromName} \
+                --subsample ${params.subsample} \
+                --mem-gb ${params.memGb} \
+                --nth ${params.nth}
             """
 }

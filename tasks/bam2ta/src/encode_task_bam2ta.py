@@ -3,36 +3,40 @@
 # ENCODE DCC BAM 2 TAGALIGN wrapper
 # Author: Jin Lee (leepc12@gmail.com)
 
+# Copied 0a69b767064edf7b0edc7af4aaabb09e0fc23b3d
+
 import sys
 import os
 import argparse
-import multiprocessing
-from common.encode_common_genomic import *
 from common.encode_common import *
+from common.encode_common_genomic import *
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(prog='ENCODE DCC BAM 2 TAGALIGN.',
-                                        description='')
+                                     description='')
     parser.add_argument('bam', type=str,
                         help='Path for BAM file.')
     parser.add_argument('--disable-tn5-shift', action="store_true",
                         help='Disable TN5 shifting for DNase-Seq.')
-    parser.add_argument("--output-prefix", type = str, default = 'output',
-                        help = "output file name prefix; defaults to 'output'")
-    parser.add_argument('--regex-grep-p-ta', type = str,
-                        help='Pattern to keep matching reads from TAGALIGN.')                        
-    parser.add_argument('--regex-grep-v-ta', default='chrM',
-                        help='Pattern to remove matching reads from TAGALIGN.')
+    parser.add_argument('--mito-chr-name', default='chrM',
+                        help='Mito chromosome name.')
     parser.add_argument('--subsample', type=int, default=0,
                         help='Subsample TAGALIGN. \
                         This affects all downstream analysis.')
     parser.add_argument('--paired-end', action="store_true",
                         help='Paired-end BAM')
     parser.add_argument('--out-dir', default='', type=str,
-                            help='Output directory.')
-    parser.add_argument('--log-level', default='INFO', 
-                        choices=['NOTSET','DEBUG','INFO',
-                            'WARNING','CRITICAL','ERROR','CRITICAL'],
+                        help='Output directory.')
+    parser.add_argument('--nth', type=int, default=1,
+                        help='Number of threads to parallelize.')
+    parser.add_argument('--mem-gb', type=float,
+                        help='Max. memory for samtools sort in GB. '
+                        'It should be total memory for this task (not memory per thread).')
+    parser.add_argument('--log-level', default='INFO',
+                        choices=['NOTSET', 'DEBUG', 'INFO',
+                                 'WARNING', 'CRITICAL', 'ERROR',
+                                 'CRITICAL'],
                         help='Log level')
     args = parser.parse_args()
 
@@ -40,16 +44,14 @@ def parse_arguments():
     log.info(sys.argv)
     return args
 
-def bam2ta_se(bam, regex_grep_v_ta,regex_grep_p_ta, out_dir, prefix = "output"):
-    prefix = os.path.join(out_dir, prefix)
-    ta = '{}.se.tagAlign.gz'.format(prefix)
+
+def bam2ta_se(bam, out_dir):
+    prefix = os.path.join(out_dir,
+                          os.path.basename(strip_ext_bam(bam)))
+    ta = '{}.tagAlign.gz'.format(prefix)
 
     cmd = 'bedtools bamtobed -i {} | '
-    cmd += 'awk \'BEGIN{{OFS="\\t"}}{{$4="N";$5="1000";print $0}}\' | '    
-    if regex_grep_p_ta:
-        cmd += 'grep -P \'{}\' | '.format(regex_grep_p_ta)        
-    else:
-        cmd += 'grep -vP \'{}\' | '.format(regex_grep_v_ta)     
+    cmd += 'awk \'BEGIN{{OFS="\\t"}}{{$4="N";$5="1000";print $0}}\' | '
     cmd += 'gzip -nc > {}'
     cmd = cmd.format(
         bam,
@@ -57,13 +59,14 @@ def bam2ta_se(bam, regex_grep_v_ta,regex_grep_p_ta, out_dir, prefix = "output"):
     run_shell_cmd(cmd)
     return ta
 
-def bam2ta_pe(bam, regex_grep_v_ta,regex_grep_p_ta, nth, out_dir, prefix = "output"):
-    prefix = os.path.join(out_dir, prefix)
+
+def bam2ta_pe(bam, nth, out_dir):
+    prefix = os.path.join(out_dir,
+                          os.path.basename(strip_ext_bam(bam)))
     ta = '{}.tagAlign.gz'.format(prefix)
     # intermediate files
     bedpe = '{}.bedpe.gz'.format(prefix)
-    # nmsrt_bam = samtools_name_sort(bam, nth, out_dir)
-    nmsrt_bam = sambamba_name_sort(bam, nth, out_dir)
+    nmsrt_bam = samtools_name_sort(bam, nth, out_dir)
 
     cmd1 = 'LC_COLLATE=C bedtools bamtobed -bedpe -mate1 -i {} | '
     # cmd1 += 'sort -k1,1 -k2,2n -k3,3n | '
@@ -79,19 +82,18 @@ def bam2ta_pe(bam, regex_grep_v_ta,regex_grep_p_ta, nth, out_dir, prefix = "outp
     cmd2 += '{{printf "%s\\t%s\\t%s\\tN\\t1000\\t%s\\n'
     cmd2 += '%s\\t%s\\t%s\\tN\\t1000\\t%s\\n",'
     cmd2 += '$1,$2,$3,$9,$4,$5,$6,$10}}\' | '
-    if regex_grep_p_ta:
-        cmd2 += 'grep -P \'{}\' | '.format(regex_grep_p_ta)           
-    else:
-        cmd2 += 'grep -vP \'{}\' | '.format(regex_grep_v_ta)    
     cmd2 += 'gzip -nc > {}'
     cmd2 = cmd2.format(
         bedpe,
         ta)
     run_shell_cmd(cmd2)
+    rm_f(bedpe)
     return ta
 
-def tn5_shift_ta(ta, out_dir, prefix = "output"):
-    prefix = os.path.join(out_dir, prefix)
+
+def tn5_shift_ta(ta, out_dir):
+    prefix = os.path.join(out_dir,
+                          os.path.basename(strip_ext_ta(ta)))
     shifted_ta = '{}.tn5.tagAlign.gz'.format(prefix)
 
     cmd = 'zcat -f {} | '
@@ -105,6 +107,7 @@ def tn5_shift_ta(ta, out_dir, prefix = "output"):
     run_shell_cmd(cmd)
     return shifted_ta
 
+
 def main():
     # read params
     args = parse_arguments()
@@ -113,26 +116,24 @@ def main():
     mkdir_p(args.out_dir)
 
     # declare temp arrays
-    temp_files = [] # files to deleted later at the end
-
-    num_cpus = multiprocessing.cpu_count()
+    temp_files = []  # files to deleted later at the end
 
     log.info('Converting BAM to TAGALIGN...')
-    ta = bam2ta_se(args.bam, args.regex_grep_v_ta,args.regex_grep_p_ta,
-                   args.out_dir, args.output_prefix)
     if args.paired_end:
-        seta = ta
-        ta = bam2ta_pe(args.bam, args.regex_grep_v_ta,args.regex_grep_p_ta,
-                        num_cpus, args.out_dir, args.output_prefix)
+        ta = bam2ta_pe(args.bam, args.nth, args.out_dir)
+    else:
+        ta = bam2ta_se(args.bam, args.out_dir)
 
     if args.subsample:
         log.info('Subsampling TAGALIGN...')
         if args.paired_end:
             subsampled_ta = subsample_ta_pe(
-                ta, args.subsample, False, False, args.out_dir, args.output_prefix)
+                ta, args.subsample, False,
+                args.mito_chr_name, False, args.out_dir)
         else:
             subsampled_ta = subsample_ta_se(
-                ta, args.subsample, False, args.out_dir, args.output_prefix)
+                ta, args.subsample, False,
+                args.mito_chr_name, args.out_dir)
         temp_files.append(ta)
     else:
         subsampled_ta = ta
@@ -141,8 +142,11 @@ def main():
         shifted_ta = subsampled_ta
     else:
         log.info("TN5-shifting TAGALIGN...")
-        shifted_ta = tn5_shift_ta(subsampled_ta, args.out_dir, args.output_prefix)
+        shifted_ta = tn5_shift_ta(subsampled_ta, args.out_dir)
         temp_files.append(subsampled_ta)
+
+    log.info('Checking if output is empty...')
+    assert_file_not_empty(shifted_ta)
 
     log.info('Removing temporary files...')
     rm_f(temp_files)
@@ -152,5 +156,6 @@ def main():
 
     log.info('All done.')
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     main()
