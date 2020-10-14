@@ -11,7 +11,8 @@ data class Macs2Params(
         val capNumPeak: Int = 300_000,
         val pvalThresh: Double = 0.01,
         val smoothWin: Int = 150,
-        val makeSignal: Boolean = true
+        val makeSignal: Boolean = true,
+        val regexBfiltPeakChrName: String = ""
 )
 
 data class Macs2Input(
@@ -65,6 +66,24 @@ fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>, peak: String) = this.tas
                 ${if (params.blacklist != null) "--blacklist ${params.blacklist.dockerPath}" else "--blacklist /dev/null"} \
                 ${if (params.makeSignal) "--make-signal" else ""} \
                 ${if (input.pairedEnd) "--paired-end" else ""}
+
+            /app/encode_macs2_atac.py \
+                ${input.ta.dockerPath} \
+                --out-dir $outputsDir/macs2 \
+                ${if (params.gensz != null) "--gensz ${params.gensz}" else ""} \
+                --chrsz ${params.chrsz.dockerPath} \
+                --cap-num-peak ${params.capNumPeak} \
+                --pval-thresh ${params.pvalThresh} \
+                --smooth-win ${params.smoothWin} \
+    
+            /app/encode_task_post_call_peak_atac.py \
+                $(ls *Peak.gz) \
+                --out-dir $outputsDir/macs2 \
+                --ta ${input.ta.dockerPath} \
+                --regex-bfilt-peak-chr-name ${"'"}${params.regexBfiltPeakChrName}${"'"} \
+                --chrsz ${params.chrsz.dockerPath} \
+                --peak-type narrowPeak \
+                ${if (params.blacklist != null) "--blacklist ${params.blacklist.dockerPath}" else "--blacklist /dev/null"} \
             """
 }
 

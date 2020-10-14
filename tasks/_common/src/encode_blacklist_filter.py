@@ -6,57 +6,93 @@
 import sys
 import os
 import argparse
-import multiprocessing
 from .encode_common import *
 
+
 def parse_arguments():
-    parser = argparse.ArgumentParser(prog='ENCODE DCC Blacklist filter.',
-                                        description='')
-    parser.add_argument('peak', type=str,
-                        help='Peak file.')
-    parser.add_argument('--blacklist', type=str, required=True,
+    parser = argparse.ArgumentParser(prog='ENCODE DCC Blacklist filter.')
+    parser.add_argument('peak', type=str, help='Peak file.')
+    parser.add_argument('--blacklist', type=str,
                         help='Blacklist BED file.')
-    parser.add_argument('--keep-irregular-chr', action="store_true",
-                        help='Keep reads with non-canonical chromosome names.')    
+    parser.add_argument('--regex-bfilt-peak-chr-name',
+                        help='Keep chromosomes matching this pattern only '
+                             'in .bfilt. peak files.')
     parser.add_argument('--out-dir', default='', type=str,
-                        help='Output directory.')    
-    parser.add_argument('--log-level', default='INFO', 
-                        choices=['NOTSET','DEBUG','INFO',
-                            'WARNING','CRITICAL','ERROR','CRITICAL'],
+                        help='Output directory.')
+    parser.add_argument('--log-level', default='INFO',
+                        choices=['NOTSET', 'DEBUG', 'INFO',
+                                 'WARNING', 'CRITICAL', 'ERROR',
+                                 'CRITICAL'],
                         help='Log level')
     args = parser.parse_args()
-    if args.blacklist.endswith('null'):
+    if args.blacklist is None or args.blacklist.endswith('null'):
         args.blacklist = ''
 
     log.setLevel(args.log_level)
     log.info(sys.argv)
     return args
 
-def blacklist_filter(peak, blacklist, keep_irregular_chr, out_dir):
-    prefix = os.path.join(out_dir, 
+
+def blacklist_filter(peak, blacklist, regex_bfilt_peak_chr_name, out_dir):
+    prefix = os.path.join(
+        out_dir,
         os.path.basename(strip_ext(peak)))
     peak_ext = get_ext(peak)
     filtered = '{}.bfilt.{}.gz'.format(prefix, peak_ext)
+    if regex_bfilt_peak_chr_name is None:
+        regex_bfilt_peak_chr_name = ''
 
-    if get_num_lines(peak)==0 or blacklist=='' or get_num_lines(blacklist)==0:
-        cmd = 'zcat -f {} | gzip -nc > {}'.format(peak, filtered)
+    if blacklist is None or blacklist == '' or get_num_lines(peak) == 0 \
+            or get_num_lines(blacklist) == 0:
+        cmd = 'zcat -f {} | '
+        cmd += 'grep -P \'{}\\b\' | '
+        cmd += 'gzip -nc > {}'
+        cmd = cmd.format(
+            peak,
+            regex_bfilt_peak_chr_name,
+            filtered)
         run_shell_cmd(cmd)
     else:
         # due to bedtools bug when .gz is given for -a and -b
         tmp1 = gunzip(peak, 'tmp1', out_dir)
         tmp2 = gunzip(blacklist, 'tmp2', out_dir)
 
-        cmd = 'bedtools intersect -v -a {} -b {} | '
+        cmd = 'bedtools intersect -nonamecheck -v -a {} -b {} | '
         cmd += 'awk \'BEGIN{{OFS="\\t"}} '
         cmd += '{{if ($5>1000) $5=1000; print $0}}\' | '
+        cmd += 'grep -P \'{}\\b\' | '
         cmd += 'gzip -nc > {}'
         cmd = cmd.format(
-            tmp1, # peak
-            tmp2, # blacklist
+            tmp1,  # peak
+            tmp2,  # blacklist
+            regex_bfilt_peak_chr_name, # regex
             filtered)
         run_shell_cmd(cmd)
         rm_f([tmp1, tmp2])
     return filtered
+
+
+def blacklist_filter_bam(bam, blacklist, out_dir):
+    prefix = os.path.join(out_dir,
+                          os.path.basename(strip_ext_bam(bam)))
+    filtered = '{}.bfilt.bam'.format(prefix)
+
+    if blacklist == '' or get_num_lines(blacklist) == 0:
+        cmd = 'cp -f {b} {f}'.format(b=bam, f=filtered)
+        run_shell_cmd(cmd)
+    else:
+        # due to bedtools bug when .gz is given for -a and -b
+        tmp2 = gunzip(blacklist, 'tmp2', out_dir)
+
+        cmd = 'bedtools intersect -nonamecheck -v -abam {} -b {} > {}'
+        cmd = cmd.format(
+            bam,
+            tmp2,  # blacklist
+            filtered)
+        run_shell_cmd(cmd)
+        rm_f([tmp2])
+    return filtered
+
 
 def main():
     # read params
@@ -68,11 +104,12 @@ def main():
 
     # reproducibility QC
     log.info('Filtering peak with blacklist...')
-    filtered = blacklist_filter(
-                args.peak, args.blacklist, 
-                args.keep_irregular_chr, args.out_dir)
-    
+    blacklist_filter(
+        args.peak, args.blacklist,
+        args.keep_irregular_chr, args.out_dir)
+
     log.info('All done.')
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     main()
