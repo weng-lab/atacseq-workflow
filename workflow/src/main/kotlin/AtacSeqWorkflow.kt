@@ -4,8 +4,7 @@ import krews.file.LocalInputFile
 import krews.file.File
 
 import model.*
-import reactor.core.publisher.toFlux
-import reactor.core.publisher.Flux
+import reactor.core.publisher.*
 import task.*
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -51,7 +50,7 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
             .map { filterInput(exp.name, it as BamReplicate) }
     }.toFlux()
 
-    val filterInput = bowtie2Output.concatWith(filterBamInput).filter {  params.tasks.contains("filter-alignments") }.map { FilterInput(it.exp, it.bam, it.repName, it.pairedEnd) }
+    val filterInput = bowtie2Output.concatWith(filterBamInput).filter { log.info { it }; params.tasks.contains("filter-alignments") }.map { FilterInput(it.exp, it.bam, it.repName, it.pairedEnd) }
     val filterOutput = filterTask("filter-alignments", filterInput)
   
     val bam2taTaskInput = params.experiments.flatMap { exp ->
@@ -59,7 +58,7 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
             .filter { it is FilteredBamReplicate && it.bam !== null }
             .map { bam2taInput(exp.name, it as FilteredBamReplicate) }
     }.toFlux()
-    val bam2taInput = filterOutput.concatWith(bam2taTaskInput).filter { params.tasks.contains("bam2ta") }.map { Bam2taInput(it.exp, it.bam, it.repName, if(forceSingleEnd) false else it.pairedEnd) }
+    val bam2taInput = filterOutput.concatWith(bam2taTaskInput).filter { log.info { it }; params.tasks.contains("bam2ta") }.map { log.info { it }; Bam2taInput(it.exp, it.bam, it.repName, if(forceSingleEnd) false else it.pairedEnd) }
     val bam2taOutput = bam2taTask("bam2ta", bam2taInput)
 
     val macs2TaskInput = params.experiments.flatMap { exp ->
@@ -106,7 +105,7 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
             }
 
         val poolTaInput: Flux<PoolTaInput> = bam2taOutput
-            .map { Triple(it.exp, it.repName, it) }
+            .map { log.info { it }; Triple(it.exp, it.repName, it) }
             .groupBy { it.first }
             .flatMap { it.collectList() }
             .handle { it, sink ->
@@ -120,7 +119,7 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
         // Combined pooled replicates
         val macs2PooledOutput = macs2Task(macs2PooledInput, "pooled")
 
-        val idrInput = Flux.merge(
+        /* val idrInput = Flux.merge(
             macs2CombinedOutput.map { IdrInputValue(it.first, peaks = Pair(it.second, it.third)) },
             poolTaOutput.map { IdrInputValue(it.exp, pooledTa = it.pooledTa) },
             macs2PooledOutput.map { IdrInputValue(it.exp, pooledPeaks = it.npeak) }
@@ -161,7 +160,7 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
                     peaks.map { peak -> IdrInput(exp, peak.first, peak.second.first, peak.second.second, pooledTa!!, pooledPeaks!!) }.toFlux()
                 }
             }
-        idrTask(idrInput, "tr")
+        idrTask(idrInput, "tr") */
 
         val macs2PrInput = sprOut.flatMap {
             listOf(
@@ -173,58 +172,48 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
         val macs2PrOutput = macs2Task(macs2PrInput, "pr")
 
         val macs2PrOutputMerged: Flux<Pair<String, Pair<String, Pair<File, File>>>> = macs2PrOutput
-            .groupBy {
-                val repName = it.repName.split("-")[0]
-                "${it.exp}-${repName}"
-            }
-            .flatMap { it.collectList() }
-            .handle { it, sink ->
-                // If not two, then one of the macs2 tasks failed; should be logged
-                if (it.size == 2) {
-                    sink.next(Pair("${it[0].exp}.${it[0].repName.split("-")[0]}", Pair("pr", Pair(it[0].npeak, it[1].npeak))))
-                }
-                
-            }
+            .reduce(mapOf<String, List<File>>(), { rm, it ->
+                val repName = "${it.exp}-${it.repName.split("-")[0]}"
+		val r = rm.toMutableMap()
+                if (!r.containsKey(repName)) r.put(repName, listOf())
+		r.set(repName, r.get(repName)!! + listOf(it.npeak))
+                r
+            })
+	    .flatMapMany { it.map { it }.toFlux() }
+	    .filter { it.value.size == 2 }
+	    .map { Pair(it.key, Pair("pr", Pair(it.value[0], it.value[1]))) }
 
-        val idrInputPr: Flux<IdrInput> = Flux.merge(
-            macs2PrOutputMerged.map { IdrInputValue(it.first, peaks = it.second) },
-            bam2taOutput.map { IdrInputValue("${it.exp}.${it.repName}", pooledTa = it.ta) },
-            macs2TrOutput.map { IdrInputValue("${it.exp}.${it.repName}", pooledPeaks = it.npeak) }
+        var i = 0
+        val idrInputPr = Flux.merge(
+            bam2taOutput.map { IdrInputValue("${it.exp}-${it.repName.split("-")[0]}", pooledTa = it.ta) },
+            macs2PrOutputMerged.map { IdrInputValue(it.first, peaks = listOf(it.second)) },
+            macs2TrOutput.map { IdrInputValue("${it.exp}-${it.repName.split("-")[0]}", pooledPeaks = it.npeak) }
         )
-            .groupBy { it.exp }
-            .flatMap { it.collectList() }
-            .handle { it, sink ->
-                val exp = it[0].exp
-                var peaks: Pair<File, File>? = null
-                var pooledTa: File? = null
-                var pooledPeaks: File? = null
-                for (i in it) {
-                    // FIXME: These preconditions we could check before we
-                    // start the workflow.
-                    if (i.peaks != null) {
-                        if (peaks != null) throw Exception("Invalid state. Should only have a single pair of pr peaks per exp.rep")
-                        peaks = i.peaks.second
-                    }
-                    if (i.pooledTa != null) {
-                        if (pooledTa != null) throw Exception("Too many pooled tas.")
-                        pooledTa = i.pooledTa
-                    }
-                    if (i.pooledPeaks != null) {
-                        if (pooledPeaks != null) throw Exception("Too many pooled peaks.")
-                        pooledPeaks = i.pooledPeaks
-                    }
-                }
-                // Any of these *could* occur if any of the previous tasks fail.
-                if (peaks == null) {
-                    log.error { "No peaks for $exp." }
-                } else if (pooledTa == null) {
-                    log.error { "No pooled ta for $exp." }
-                } else if (pooledPeaks == null) {
-                    log.error { "No pooled peaks for $exp." }
-                } else {
-                    sink.next(IdrInput(exp, "pr", peaks.first, peaks.second, pooledTa!!, pooledPeaks!!))
-                }
-            }
+	    .reduce(mapOf<String, IdrInputValue>(), { mm, next ->
+	        val m = mm.toMutableMap()
+		if (!m.containsKey(next.exp))
+		    m.put(next.exp, IdrInputValue(
+		        next.exp,
+		        next.pooledTa,
+		        next.peaks,
+			next.pooledPeaks
+	            ))
+		val acc = m.get(next.exp)!!
+		m.set(next.exp,
+		    IdrInputValue(
+		        next.exp,
+		        if (next.pooledTa !== null) next.pooledTa else acc.pooledTa,
+		        acc.peaks.toList() + next.peaks,
+		        if (next.pooledPeaks !== null) next.pooledPeaks else acc.pooledPeaks
+	            )
+		)
+                m
+	    })
+    	    .flatMapMany { it.map { it }.toFlux() }
+	    .filter { it.value.peaks.size > 0 && it.value.pooledTa !== null && it.value.pooledPeaks !== null }
+	    .map {
+		IdrInput(it.key, "pr", it.value.peaks.first().second.first, it.value.peaks.first().second.second, it.value.pooledTa!!, it.value.pooledPeaks!!)
+	    }
         idrTask(idrInputPr, "pr")
     }
  
@@ -250,7 +239,7 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
 data class IdrInputValue(
     val exp: String,
     val pooledTa: File? = null,
-    val peaks: Pair<String, Pair<File, File>>? = null,
+    val peaks: List<Pair<String, Pair<File, File>>> = listOf(),
     val pooledPeaks: File? = null
 )
 
