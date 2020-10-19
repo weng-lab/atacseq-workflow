@@ -9,8 +9,13 @@ cd "$(dirname "$(dirname "$0")")"
 for taskDir in `ls tasks | LC_COLLATE=C sort` ; do
     taskDir="tasks/${taskDir}"
     PUSH_IMAGE=true
+    SKIP=false
     source $taskDir/docker-build-def.sh
     TAG=${IMAGE_NAME}:${IMAGE_VERSION}
+    if [[ "$SKIP" = true ]]; then
+        echo "Skipping $TAG..."
+        continue
+    fi
     if [[ "$PUSH_IMAGE" = true ]]; then
         echo "Pulling latest $TAG..."
         docker pull ${TAG} >/dev/null 2>&1 || true

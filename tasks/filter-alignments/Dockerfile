@@ -15,7 +15,8 @@ COPY src/ /app
 COPY --from=common /app/common /app/common
 
 # Picard jar and sambamba
-RUN apk add --no-cache xz-dev bzip2-dev wget build-base python zlib-dev git && \
+RUN apk add --no-cache bash grep gzip xz-dev bzip2-dev wget build-base python zlib-dev git python3 py3-setuptools py3-pip && \
+    python3 -m pip install SAMstats==0.2.1 && \
     wget https://github.com/biod/sambamba/releases/download/v0.6.8/sambamba-0.6.8-linux-static.gz && \
     gunzip sambamba-0.6.8-linux-static.gz && mv sambamba-0.6.8-linux-static /bin/sambamba && chmod 755 /bin/sambamba && \
     wget https://github.com/broadinstitute/picard/releases/download/2.18.14/picard.jar -O /bin/picard.jar && chmod +x /bin/picard.jar && \

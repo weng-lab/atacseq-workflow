@@ -69,7 +69,7 @@ def samstat(bam, nth=1, mem_gb=None, out_dir=''):
 def samtools_index(bam, nth=1, out_dir=''):
     bai = '{}.bai'.format(bam)
     run_shell_cmd(
-        'samtools index {bam} {res_param}'.format(
+        'samtools index {res_param} {bam}'.format(
             bam=bam,
             res_param=get_samtools_res_param('index', nth=nth),
         )

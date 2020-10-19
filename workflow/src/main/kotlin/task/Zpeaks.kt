@@ -7,9 +7,9 @@ import org.reactivestreams.Publisher
 data class ZPeaksInput(
         val name: String,
         val bamRep1: File,
-        val bamRep1Index: File,
+        val bamRep1Index: File?,
         val bamRep2: File,
-        val bamRep2Index: File
+        val bamRep2Index: File?
 )
 
 data class ZPeaksOutput(

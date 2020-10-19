@@ -7,9 +7,9 @@
 import sys
 import argparse
 from common.encode_common import *
-from common.encode_common_genomic import peak_to_bigbed
-from common.encode_blacklist_filter import blacklist_filter
-from common.encode_frip import frip
+from common.encode_common_genomic import *
+from common.encode_blacklist_filter import *
+from common.encode_frip import *
 
 
 def parse_arguments():

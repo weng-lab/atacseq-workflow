@@ -8,6 +8,9 @@
 # - Updated imports
 # - Add `TMP_DIR` param to picard call
 # - Add `tmpdir` param to sambamba markdup
+# - Make assign_multimappers point to absolute path in container
+# - Add mem_gb param to pbc_qc_pe
+# - Add output prefix
 
 import sys
 import os
@@ -47,6 +50,8 @@ def parse_arguments():
     parser.add_argument('--picard-java-heap',
                         help='Picard\'s Java max. heap: java -jar picard.jar '
                              '-Xmx[MAX_HEAP]')
+    parser.add_argument('--output-prefix', type = str,
+                        help = "output file name prefix; defaults to the base name of the file")
     parser.add_argument('--out-dir', default='', type=str,
                         help='Output directory.')
     parser.add_argument('--log-level', default='INFO',
@@ -61,13 +66,14 @@ def parse_arguments():
     return args
 
 
-def rm_unmapped_lowq_reads_se(bam, multimapping, mapq_thresh, nth, mem_gb, out_dir):
+def rm_unmapped_lowq_reads_se(bam, multimapping, mapq_thresh, nth, mem_gb, out_dir, prefix=None):
     """There are pipes with multiple samtools commands.
     For such pipes, use multiple threads (-@) for only one of them.
     Priority is on sort > index > fixmate > view.
     """
-    prefix = os.path.join(out_dir,
-                          os.path.basename(strip_ext_bam(bam)))
+    if prefix is None:
+        prefix = os.path.basename(strip_ext_bam(bam))
+    prefix = os.path.join(out_dir, prefix)
     filt_bam = '{}.filt.bam'.format(prefix)
 
     if multimapping:
@@ -75,7 +81,7 @@ def rm_unmapped_lowq_reads_se(bam, multimapping, mapq_thresh, nth, mem_gb, out_d
 
         run_shell_cmd(
             'samtools view -h {qname_sort_bam} | '
-            '$(which assign_multimappers.py) -k {multimapping} | '
+            '/app/assign_multimappers.py -k {multimapping} | '
             'samtools view -F 1804 -Su /dev/stdin | '
             'samtools sort /dev/stdin -o {filt_bam} -T {prefix} {res_param}'.format(
                 qname_sort_bam=qname_sort_bam,
@@ -101,13 +107,14 @@ def rm_unmapped_lowq_reads_se(bam, multimapping, mapq_thresh, nth, mem_gb, out_d
     return filt_bam
 
 
-def rm_unmapped_lowq_reads_pe(bam, multimapping, mapq_thresh, nth, mem_gb, out_dir):
+def rm_unmapped_lowq_reads_pe(bam, multimapping, mapq_thresh, nth, mem_gb, out_dir, prefix=None):
     """There are pipes with multiple samtools commands.
     For such pipes, use multiple threads (-@) for only one of them.
     Priority is on sort > index > fixmate > view.
     """
-    prefix = os.path.join(out_dir,
-                          os.path.basename(strip_ext_bam(bam)))
+    if prefix is None:
+        prefix = os.path.basename(strip_ext_bam(bam))
+    prefix = os.path.join(out_dir, prefix)
     filt_bam = '{}.filt.bam'.format(prefix)
     tmp_filt_bam = '{}.tmp_filt.bam'.format(prefix)
     fixmate_bam = '{}.fixmate.bam'.format(prefix)
@@ -125,7 +132,7 @@ def rm_unmapped_lowq_reads_pe(bam, multimapping, mapq_thresh, nth, mem_gb, out_d
 
         run_shell_cmd(
             'samtools view -h {tmp_filt_bam} | '
-            '$(which assign_multimappers.py) -k {multimapping} --paired-end | '
+            '/app/assign_multimappers.py -k {multimapping} --paired-end | '
             'samtools fixmate -r /dev/stdin {fixmate_bam} {res_param}'.format(
                 tmp_filt_bam=tmp_filt_bam,
                 multimapping=multimapping,
@@ -283,12 +290,12 @@ def pbc_qc_se(bam, mito_chr_name, out_dir):
     return pbc_qc
 
 
-def pbc_qc_pe(bam, mito_chr_name, nth, out_dir):
+def pbc_qc_pe(bam, mito_chr_name, nth, mem_gb, out_dir):
     prefix = os.path.join(out_dir,
                           os.path.basename(strip_ext_bam(bam)))
     pbc_qc = '{}.lib_complexity.qc'.format(prefix)
 
-    nmsrt_bam = samtools_name_sort(bam, nth, out_dir)
+    nmsrt_bam = samtools_name_sort(bam, nth, mem_gb, out_dir)
     cmd3 = 'bedtools bamtobed -bedpe -i {} | '
     cmd3 += 'awk \'BEGIN{{OFS="\\t"}}{{print $1,$2,$4,$6,$9,$10}}\' | '
     cmd3 += 'grep -v "^{}\\s" | sort | uniq -c | '
@@ -324,11 +331,11 @@ def main():
     if args.paired_end:
         filt_bam = rm_unmapped_lowq_reads_pe(
             args.bam, args.multimapping, args.mapq_thresh,
-            args.nth, args.mem_gb, args.out_dir)
+            args.nth, args.mem_gb, args.out_dir, args.output_prefix)
     else:
         filt_bam = rm_unmapped_lowq_reads_se(
             args.bam, args.multimapping, args.mapq_thresh,
-            args.nth, args.mem_gb, args.out_dir)
+            args.nth, args.mem_gb, args.out_dir, args.output_prefix)
 
     log.info('Checking if filtered BAM file is empty...')
 
@@ -397,7 +404,7 @@ def main():
 
     log.info('Generating PBC QC log...')
     if args.paired_end:
-        pbc_qc_pe(dupmark_bam, args.mito_chr_name, args.nth,
+        pbc_qc_pe(dupmark_bam, args.mito_chr_name, args.nth, args.mem_gb,
                   args.out_dir)
     else:
         pbc_qc_se(dupmark_bam, args.mito_chr_name, args.out_dir)

@@ -27,7 +27,7 @@ data class TrimAdapterOutput(
 fun WorkflowBuilder.trimAdapterTask(name: String, i: Publisher<TrimAdapterInput>) = this.task<TrimAdapterInput, TrimAdapterOutput>(name, i) {
     val params = taskParams<TrimAdapterParams>()
 
-    dockerImage = "genomealmanac/atacseq-trim-adapters:1.1.0"
+    dockerImage = "genomealmanac/atacseq-trim-adapters:1.1.6"
 
     val rep = input.rep
     output =
@@ -36,7 +36,7 @@ fun WorkflowBuilder.trimAdapterTask(name: String, i: Publisher<TrimAdapterInput>
                         exp = input.exp,
                         repName = rep.name,
                         pairedEnd = false,
-                        mergedR1 = OutputFile("trim/${input.exp}.${rep.name}.merged.fastq.gz"),
+                        mergedR1 = OutputFile("trim/${input.exp}.${rep.name}.R1.merged.fastq.gz"),
                         mergedR2 = null
                 )
             } else {
@@ -72,11 +72,13 @@ fun WorkflowBuilder.trimAdapterTask(name: String, i: Publisher<TrimAdapterInput>
     command =
             """
             /app/encode_task_trim_adapter.py \
-                ${fastqs}
-                --adapters ${if (adapters != null) adapters else ""} \
+                ${fastqs} \
+                ${if (adapters != null) "--adapters $adapters" else ""} \
                 ${if (rep is FastqReplicatePE) "--paired-end" else ""} \
                 ${if (adapters != null) "--auto-detect-adapter" else ""} \
                 --cutadapt-param ' ${params.cutAdaptParam}' \
-                --nth ${params.nth}
+                --nth ${params.nth} \
+                --output-prefix ${input.exp}.${rep.name} \
+                --out-dir $outputsDir/trim
             """
 }

@@ -4,6 +4,9 @@
 # Author: Jin Lee (leepc12@gmail.com)
 
 # Copied 0a69b767064edf7b0edc7af4aaabb09e0fc23b3d
+# Changes
+# - Fix bowtie2 index prefix in out dir
+# - Add output prefix
 
 import sys
 import os
@@ -37,6 +40,8 @@ def parse_arguments():
     parser.add_argument('--mem-gb', type=float,
                         help='Max. memory for samtools sort in GB. '
                         'It should be total memory for this task (not memory per thread).')
+    parser.add_argument('--output-prefix', type = str,
+                        help = "output file name prefix; defaults to the base name of the file")
     parser.add_argument('--out-dir', default='', type=str,
                         help='Output directory.')
     parser.add_argument('--log-level', default='INFO',
@@ -58,8 +63,9 @@ def parse_arguments():
 
 
 def bowtie2_se(fastq, ref_index_prefix,
-               multimapping, nth, mem_gb, out_dir):
-    basename = os.path.basename(strip_ext_fastq(fastq))
+               multimapping, nth, mem_gb, out_dir, prefix=None):
+    if prefix is None:
+        prefix = os.path.basename(strip_ext_fastq(fastq))
     prefix = os.path.join(out_dir, basename)
     tmp_bam = '{}.bam'.format(prefix)
 
@@ -80,9 +86,10 @@ def bowtie2_se(fastq, ref_index_prefix,
 
 
 def bowtie2_pe(fastq1, fastq2, ref_index_prefix,
-               multimapping, nth, mem_gb, out_dir):
-    basename = os.path.basename(strip_ext_fastq(fastq1))
-    prefix = os.path.join(out_dir, basename)
+               multimapping, nth, mem_gb, out_dir, prefix=None):
+    if prefix is None:
+        prefix = os.path.basename(strip_ext_fastq(fastq1))
+    prefix = os.path.join(out_dir, prefix)
     tmp_bam = '{}.bam'.format(prefix)
 
     run_shell_cmd(
@@ -144,7 +151,7 @@ def main():
         tar = args.bowtie2_index_prefix_or_tar
         # untar
         untar(tar, args.out_dir)
-        bowtie2_index_prefix = find_bowtie2_index_prefix(args.out_dir)
+        bowtie2_index_prefix = os.path.join(args.out_dir, find_bowtie2_index_prefix(args.out_dir))
         temp_files.append('{}*'.format(
             bowtie2_index_prefix))
     else:
@@ -160,13 +167,13 @@ def main():
             args.fastqs[0], args.fastqs[1],
             bowtie2_index_prefix,
             args.multimapping, args.nth, args.mem_gb,
-            args.out_dir)
+            args.out_dir, args.output_prefix)
     else:
         bam = bowtie2_se(
             args.fastqs[0],
             bowtie2_index_prefix,
             args.multimapping, args.nth, args.mem_gb,
-            args.out_dir)
+            args.out_dir, args.output_prefix)
 
     log.info('Removing temporary files...')
     print(temp_files)

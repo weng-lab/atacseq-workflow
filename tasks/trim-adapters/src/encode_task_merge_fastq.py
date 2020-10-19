@@ -4,13 +4,14 @@
 # Author: Jin Lee (leepc12@gmail.com)
 
 # Copied 0a69b767064edf7b0edc7af4aaabb09e0fc23b3d
+# Changes
+# - When merging fastqs, append name at the end
+# - Add output prefix
 
 import sys
 import os
 import argparse
-from encode_lib_common import (
-    log, ls_l, mkdir_p, read_tsv, run_shell_cmd,
-    strip_ext_fastq)
+from common.encode_common import *
 
 
 def parse_arguments(debug=False):
@@ -55,18 +56,11 @@ def parse_arguments(debug=False):
     return args
 
 
-def merge_fastqs(fastqs, end, out_dir):
-    """make merged fastqs on $out_dir/R1, $out_dir/R2
-    """
-    out_dir = os.path.join(out_dir, end)
-    mkdir_p(out_dir)
-    prefix = os.path.join(out_dir,
-                          os.path.basename(strip_ext_fastq(fastqs[0])))
-
-    if len(fastqs) > 1:
-        merged = '{}.merged.fastq.gz'.format(prefix)
-    else:
-        merged = '{}.fastq.gz'.format(prefix)
+def merge_fastqs(fastqs, end, out_dir, prefix = None):
+    if prefix is None:
+        prefix = os.path.basename(strip_ext_fastq(fastqs[0]))
+    prefix = os.path.join(out_dir, prefix + ('.' + end if end != "" else ""))
+    merged = '{}.merged.fastq.gz'.format(prefix)
 
     cmd = 'zcat -f {} | gzip -nc > {}'.format(
         ' '.join(fastqs),

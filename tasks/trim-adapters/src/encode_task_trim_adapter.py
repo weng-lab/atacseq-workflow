@@ -1,11 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # ENCODE DCC adapter trimmer wrapper
 # Author: Jin Lee (leepc12@gmail.com)
 
 # Copied 0a69b767064edf7b0edc7af4aaabb09e0fc23b3d
 # Changes
+# - Change env to python3
 # - Can pass fastqs and adapters like 1_r1,1_r2 2_r1,2_r2 or 1 2 3
+# - Add ability to specify output prefix
 
 import sys
 import os
@@ -45,6 +47,8 @@ def parse_arguments(debug=False):
                         help='Paired-end FASTQs.')
     parser.add_argument('--nth', type=int, default=1,
                         help='Number of threads to parallelize.')
+    parser.add_argument('--output-prefix', type = str,
+                        help = "output file name prefix; defaults to the base name of the file")
     parser.add_argument('--out-dir', default='', type=str,
                         help='Output directory.')
     parser.add_argument('--log-level', default='INFO',
@@ -195,10 +199,10 @@ def main():
 
     log.info('Merging fastqs...')
     log.info('R1 to be merged: {}'.format(trimmed_fastqs_R1))
-    merge_fastqs(trimmed_fastqs_R1, 'R1', args.out_dir)
+    merge_fastqs(trimmed_fastqs_R1, 'R1', args.out_dir, args.output_prefix)
     if args.paired_end:
         log.info('R2 to be merged: {}'.format(trimmed_fastqs_R2))
-        merge_fastqs(trimmed_fastqs_R2, 'R2', args.out_dir)
+        merge_fastqs(trimmed_fastqs_R2, 'R2', args.out_dir, args.output_prefix)
 
     temp_files.extend(trimmed_fastqs_R1)
     temp_files.extend(trimmed_fastqs_R2)

@@ -33,30 +33,29 @@ data class FilterOutput(
         val repName: String,
         val pairedEnd: Boolean,
         val bam: File,
-        val bai: File,
-        val flagstatQC: File,
+        val bai: File?,
+        val samstatsQC: File,
         val dupQC: File?,
-        val pbcQC: File?,
-        val mitoDupLog: File?
+        val pbcQC: File?
 )
 
 fun WorkflowBuilder.filterTask(name:String, i: Publisher<FilterInput>) = this.task<FilterInput, FilterOutput>(name, i) {
     val params = taskParams<FilterParams>()
 
-    dockerImage = "genomealmanac/atacseq-filter-alignments:2.0.0"
+    dockerImage = "genomealmanac/atacseq-filter-alignments:2.0.10"
     val prefix = "filter/${input.exp}.${input.repName}"
     val noDupRemoval = params.noDupRemoval
+    val bam_prefix = "$prefix${if (noDupRemoval) ".filt" else ".nodup" }${if (params.filterChrs.size > 0) ".no_${params.filterChrs.joinToString("_")}" else "" }"
     output =
             FilterOutput(
                     exp = input.exp,
                     repName = input.repName,
                     pairedEnd = input.pairedEnd,
-                    bam = if (noDupRemoval) OutputFile("$prefix.filt.bam") else OutputFile("$prefix.nodup.bam"),
-                    bai = if (noDupRemoval) OutputFile("$prefix.filt.bam.bai") else OutputFile("$prefix.nodup.bam.bai"),
-                    flagstatQC = if (noDupRemoval) OutputFile("$prefix.filt.flagstat.qc") else OutputFile("$prefix.nodup.flagstat.qc"),
+                    bam = OutputFile("$bam_prefix.bam"),
+                    bai = OutputFile("$bam_prefix.bam.bai"),
+                    samstatsQC = OutputFile("$bam_prefix.samstats.qc"),
                     dupQC = if (noDupRemoval) null else OutputFile("$prefix.dup.qc"),
-                    pbcQC = if (noDupRemoval) null else OutputFile("$prefix.pbc.qc"),
-                    mitoDupLog = if (noDupRemoval) null else OutputFile("$prefix.mito_dup.txt")
+                    pbcQC = if (noDupRemoval) null else OutputFile("$prefix.dupmark.lib_complexity.qc")
             )
 
     command =
@@ -69,10 +68,12 @@ fun WorkflowBuilder.filterTask(name:String, i: Publisher<FilterInput>) = this.ta
             --mapq-thresh ${params.mapqThresh} \
             --filter-chrs ${params.filterChrs.joinToString(" ") { it }} \
             --chrsz ${params.chrsz.dockerPath} \
-            ${if (params.noDupRemoval) "--no-dup-removal" else ""}
+            ${if (params.noDupRemoval) "--no-dup-removal" else ""} \
             --mito-chr-name ${params.mitoChrName} \
             --mem-gb ${params.memGb} \
             --nth ${params.nth} \
-            --picard-java-heap ${params.memGb}G
+            --picard-java-heap ${params.memGb}G \
+            --out-dir $outputsDir/filter \
+            --output-prefix ${input.exp}.${input.repName}
         """
 }

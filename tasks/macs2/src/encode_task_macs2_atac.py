@@ -6,12 +6,13 @@
 # Copied 0a69b767064edf7b0edc7af4aaabb09e0fc23b3d
 # Changes
 # - Added tempdir param to macs2
+# - Add output prefix
 
 import sys
 import os
 import argparse
 from common.encode_common import *
-from common.encode_common_genomic import peak_to_bigbed
+from common.encode_common_genomic import *
 
 
 def parse_arguments():
@@ -21,7 +22,7 @@ def parse_arguments():
                         help='Path for TAGALIGN file.')
     parser.add_argument('--chrsz', type=str,
                         help='2-col chromosome sizes file.')
-    parser.add_argument('--gensz', type=str,
+    parser.add_argument('--gensz', type=str, default = '',
                         help='Genome size (sum of entries in 2nd column of \
                             chr. sizes file, or hs for human, ms for mouse).')
     parser.add_argument('--pval-thresh', default=0.01, type=float,
@@ -30,6 +31,8 @@ def parse_arguments():
                         help='Smoothing window size.')
     parser.add_argument('--cap-num-peak', default=300000, type=int,
                         help='Capping number of peaks by taking top N peaks.')
+    parser.add_argument('--output-prefix', type = str,
+                        help = "output file name prefix; defaults to the base name of the file")
     parser.add_argument('--out-dir', default='', type=str,
                         help='Output directory.')
     parser.add_argument('--log-level', default='INFO',
@@ -39,15 +42,20 @@ def parse_arguments():
                         help='Log level')
     args = parser.parse_args()
 
+    if args.gensz == '':
+        with open(args.chrsz, 'r') as f:
+            args.gensz = sum([ int(x.strip().split('\t')[-1]) for x in f ])
+
     log.setLevel(args.log_level)
     log.info(sys.argv)
     return args
 
 
 def macs2(ta, chrsz, gensz, pval_thresh, smooth_win, cap_num_peak,
-          out_dir):
-    prefix = os.path.join(out_dir,
-                          os.path.basename(strip_ext_ta(ta)))
+          out_dir,prefix=None):
+    if prefix is None:
+        prefix = os.path.basename(strip_ext_ta(ta))
+    prefix = os.path.join(out_dir, prefix)
     npeak = '{}.{}.{}.narrowPeak.gz'.format(
         prefix,
         'pval{}'.format(pval_thresh),
@@ -112,7 +120,7 @@ def main():
     npeak = macs2(
         args.ta, args.chrsz, args.gensz, args.pval_thresh,
         args.smooth_win, args.cap_num_peak,
-        args.out_dir)
+        args.out_dir, args.output_prefix)
 
     log.info('Checking if output is empty...')
     assert_file_not_empty(npeak)

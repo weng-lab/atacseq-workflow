@@ -30,7 +30,7 @@ data class Bam2taOutput(
 fun WorkflowBuilder.bam2taTask(name: String,i: Publisher<Bam2taInput>) = this.task<Bam2taInput, Bam2taOutput>(name, i) {
     val params = taskParams<Bam2taParams>()
 
-    dockerImage = "genomealmanac/atacseq-bam2ta:v1.1.0"
+    dockerImage = "genomealmanac/atacseq-bam2ta:1.1.2"
 
     val prefix = "bam2ta/${input.exp}.${input.repName}"
     output =
@@ -43,13 +43,15 @@ fun WorkflowBuilder.bam2taTask(name: String,i: Publisher<Bam2taInput>) = this.ta
 
     command =
             """
-            /app/encode_bam2ta.py \
+            /app/encode_task_bam2ta.py \
                 ${input.bam.dockerPath} \
                 ${if (input.pairedEnd) "--paired-end" else ""} \
                 ${if (params.disableTn5Shift) "--disable-tn5-shift" else ""} \
                 --mito-chr-name ${params.mitoChromName} \
                 --subsample ${params.subsample} \
                 --mem-gb ${params.memGb} \
-                --nth ${params.nth}
+                --nth ${params.nth} \
+                --out-dir $outputsDir/bam2ta \
+                --output-prefix ${input.exp}.${input.repName}
             """
 }

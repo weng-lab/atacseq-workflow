@@ -27,17 +27,13 @@ data class Bowtie2Output(
         val exp: String,
         val repName: String,
         val pairedEnd: Boolean,
-        val bam: File,
-        val bai: File,
-        val alignLog: File,
-        val flagstatQC: File,
-        val readLenLog: File
+        val bam: File
 )
 
 fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this.task<Bowtie2Input, Bowtie2Output>(name, i) {
     val params = taskParams<Bowtie2Params>()
 
-    dockerImage = "genomealmanac/atacseq-bowtie2:1.1.0"
+    dockerImage = "genomealmanac/atacseq-bowtie2:1.1.6"
 
     val prefix = "bowtie2/${input.exp}.${input.repName}"
     output =
@@ -45,11 +41,7 @@ fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this
                     exp = input.exp,
                     repName = input.repName,
                     pairedEnd = input.pairedEnd,
-                    bam = OutputFile("$prefix.bam"),
-                    bai = OutputFile("$prefix.bam.bai"),
-                    alignLog = OutputFile("$prefix.align.log"),
-                    flagstatQC = OutputFile("$prefix.flagstat.qc"),
-                    readLenLog = OutputFile("$prefix.read_length.txt")
+                    bam = OutputFile("$prefix.srt.bam")
             )
 
     command =
@@ -61,6 +53,8 @@ fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this
                 ${if (input.pairedEnd) "--paired-end" else ""} \
                 --multimapping ${params.multimapping} \
                 --mem-gb ${params.memGb} \
-                --nth ${params.nth}
+                --nth ${params.nth} \
+                --out-dir $outputsDir/bowtie2 \
+                --output-prefix ${input.exp}.${input.repName}
             """
 }

@@ -36,15 +36,16 @@ data class Macs2Output(
 fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>, peak: String) = this.task<Macs2Input, Macs2Output>("macs2-$peak", i, "macs2") {
     val params = taskParams<Macs2Params>()
   
-    dockerImage = "genomealmanac/atacseq-macs2:2.1.0"
+    dockerImage = "genomealmanac/atacseq-macs2:2.2.15"
 
     val prefix = "macs2/${input.exp}.${input.repName}"
     val npPrefix = "$prefix.pval${params.pvalThresh}.${capNumPeakFilePrefix(params.capNumPeak)}"
+    val npeak = OutputFile("$npPrefix.narrowPeak.gz")
     output =
             Macs2Output(
                     exp = input.exp,
                     repName = input.repName,
-                    npeak = OutputFile("$npPrefix.narrowPeak.gz"),
+                    npeak = npeak,
                     bfiltNpeak = OutputFile("$npPrefix.bfilt.narrowPeak.gz"),
                     bfiltNpeakBB = OutputFile("$npPrefix.bfilt.narrowPeak.bb"),
                     fripQc = OutputFile("$npPrefix.bfilt.frip.qc"),
@@ -54,7 +55,7 @@ fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>, peak: String) = this.tas
 
     command =
             """
-            /app/encode_macs2_atac.py \
+            /app/encode_task_macs2_atac.py \
                 ${input.ta.dockerPath} \
                 --out-dir $outputsDir/macs2 \
                 --output-prefix ${input.exp}.${input.repName} \
@@ -62,28 +63,24 @@ fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>, peak: String) = this.tas
                 --chrsz ${params.chrsz.dockerPath} \
                 --cap-num-peak ${params.capNumPeak} \
                 --pval-thresh ${params.pvalThresh} \
-                --smooth-win ${params.smoothWin} \
-                ${if (params.blacklist != null) "--blacklist ${params.blacklist.dockerPath}" else "--blacklist /dev/null"} \
-                ${if (params.makeSignal) "--make-signal" else ""} \
-                ${if (input.pairedEnd) "--paired-end" else ""}
+                --smooth-win ${params.smoothWin}
 
-            /app/encode_macs2_atac.py \
-                ${input.ta.dockerPath} \
-                --out-dir $outputsDir/macs2 \
-                ${if (params.gensz != null) "--gensz ${params.gensz}" else ""} \
-                --chrsz ${params.chrsz.dockerPath} \
-                --cap-num-peak ${params.capNumPeak} \
-                --pval-thresh ${params.pvalThresh} \
-                --smooth-win ${params.smoothWin} \
-    
             /app/encode_task_post_call_peak_atac.py \
-                $(ls *Peak.gz) \
+                ${npeak.dockerPath} \
                 --out-dir $outputsDir/macs2 \
                 --ta ${input.ta.dockerPath} \
                 --regex-bfilt-peak-chr-name ${"'"}${params.regexBfiltPeakChrName}${"'"} \
                 --chrsz ${params.chrsz.dockerPath} \
                 --peak-type narrowPeak \
-                ${if (params.blacklist != null) "--blacklist ${params.blacklist.dockerPath}" else "--blacklist /dev/null"} \
+                ${if (params.blacklist != null) "--blacklist ${params.blacklist.dockerPath}" else "--blacklist /dev/null"}
+
+            /app/encode_task_macs2_signal_track_atac.py \
+                ${input.ta.dockerPath} \
+                --out-dir $outputsDir/macs2 \
+                --output-prefix ${input.exp}.${input.repName} \
+                --chrsz ${params.chrsz.dockerPath} \
+                --pval-thresh ${params.pvalThresh} \
+                --smooth-win ${params.smoothWin}
             """
 }
 

@@ -15,5 +15,5 @@ COPY src/ /app
 COPY --from=common /app/common /app/common
 
 # cutadapt
-RUN apk add --no-cache python3 python3-dev build-base py3-pip py3-setuptools && python3 -m pip install cutadapt && apk del py3-pip build-base 
+RUN apk add --no-cache bash python3 python3-dev build-base py3-pip py3-setuptools && python3 -m pip install cutadapt && apk del py3-pip build-base 
 

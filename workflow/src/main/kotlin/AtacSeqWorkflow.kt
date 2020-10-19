@@ -21,8 +21,8 @@ data class AtacSeqParams(
     val tasks: List<String> = listOf("trim-adapter","bowtie2","filter-alignments","bam2ta","macs2")
 )
 
-fun filterInput(exp: String, v: BamReplicate): Bowtie2Output = Bowtie2Output( exp, v.name, v.pairedend, v.bam!!, v.bam, v.bam, v.bam, v.bam )
-fun bam2taInput(exp: String, v: FilteredBamReplicate): FilterOutput = FilterOutput( exp, v.name, v.pairedend, v.bam!!, v.bam, v.bam, v.bam, v.bam, v.bam )
+fun filterInput(exp: String, v: BamReplicate): Bowtie2Output = Bowtie2Output( exp, v.name, v.pairedend, v.bam!!)
+fun bam2taInput(exp: String, v: FilteredBamReplicate): FilterOutput = FilterOutput( exp, v.name, v.pairedend, v.bam!!, null, v.bam, null, null)
 fun macs2Input(exp: String, v: TagAlignReplicate): Bam2taOutput = Bam2taOutput(exp, v.ta!!, v.name, v.pairedend)
 
 val atacSeqWorkflow = workflow("atac-seq-workflow") {

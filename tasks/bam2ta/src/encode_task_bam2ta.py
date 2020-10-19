@@ -4,6 +4,8 @@
 # Author: Jin Lee (leepc12@gmail.com)
 
 # Copied 0a69b767064edf7b0edc7af4aaabb09e0fc23b3d
+# Changes
+# - Add output prefix
 
 import sys
 import os
@@ -26,6 +28,8 @@ def parse_arguments():
                         This affects all downstream analysis.')
     parser.add_argument('--paired-end', action="store_true",
                         help='Paired-end BAM')
+    parser.add_argument('--output-prefix', type = str,
+                        help = "output file name prefix; defaults to the base name of the file")
     parser.add_argument('--out-dir', default='', type=str,
                         help='Output directory.')
     parser.add_argument('--nth', type=int, default=1,
@@ -45,9 +49,10 @@ def parse_arguments():
     return args
 
 
-def bam2ta_se(bam, out_dir):
-    prefix = os.path.join(out_dir,
-                          os.path.basename(strip_ext_bam(bam)))
+def bam2ta_se(bam, out_dir, prefix=None):
+    if prefix is None:
+        prefix = os.path.basename(strip_ext_bam(bam))
+    prefix = os.path.join(out_dir, prefix)
     ta = '{}.tagAlign.gz'.format(prefix)
 
     cmd = 'bedtools bamtobed -i {} | '
@@ -60,9 +65,10 @@ def bam2ta_se(bam, out_dir):
     return ta
 
 
-def bam2ta_pe(bam, nth, out_dir):
-    prefix = os.path.join(out_dir,
-                          os.path.basename(strip_ext_bam(bam)))
+def bam2ta_pe(bam, nth, out_dir, prefix=None):
+    if prefix is None:
+        prefix = os.path.basename(strip_ext_bam(bam))
+    prefix = os.path.join(out_dir, prefix)
     ta = '{}.tagAlign.gz'.format(prefix)
     # intermediate files
     bedpe = '{}.bedpe.gz'.format(prefix)
@@ -120,9 +126,9 @@ def main():
 
     log.info('Converting BAM to TAGALIGN...')
     if args.paired_end:
-        ta = bam2ta_pe(args.bam, args.nth, args.out_dir)
+        ta = bam2ta_pe(args.bam, args.nth, args.out_dir, args.output_prefix)
     else:
-        ta = bam2ta_se(args.bam, args.out_dir)
+        ta = bam2ta_se(args.bam, args.out_dir, args.output_prefix)
 
     if args.subsample:
         log.info('Subsampling TAGALIGN...')

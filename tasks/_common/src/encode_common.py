@@ -3,6 +3,10 @@
 # ENCODE DCC common functions
 # Author: Jin Lee (leepc12@gmail.com)
 
+# Copied 0a69b767064edf7b0edc7af4aaabb09e0fc23b3d
+# Changes
+# - Make ls_l be recursive
+
 import sys
 import os
 import re
@@ -190,7 +194,7 @@ def gunzip(f, suffix, out_dir):
 
 
 def ls_l(d):
-    cmd = 'ls -l {}'.format(d)
+    cmd = 'ls -lR {}'.format(d)
     run_shell_cmd(cmd)
 
 
@@ -278,7 +282,6 @@ def copy_f_to_dir(f, out_dir):  # copy 'f' to 'out_dir'/'f'
         raise Exception('Invalid destination directory {}.'.format(out_dir))
     dest = os.path.join(out_dir, os.path.basename(f))
     return copy_f_to_f(f, dest)
-
 
 def now():
     return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
