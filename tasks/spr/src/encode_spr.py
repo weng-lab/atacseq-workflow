@@ -51,7 +51,7 @@ def spr_se(ta, out_dir):
         ta,
         nlines,
         prefix)
-    run_shell_cmd(cmd1, executable='/bin/bash')
+    run_shell_cmd(cmd1)
 
     cmd2 = 'gzip -nc {} > {}'
     cmd2 = cmd2.format(
@@ -89,7 +89,7 @@ def spr_pe(ta, out_dir):
         ta,
         nlines,
         prefix)
-    run_shell_cmd(cmd1, executable='/bin/bash')
+    run_shell_cmd(cmd1)
 
     cmd2 = 'zcat -f {} | '
     cmd2 += 'awk \'BEGIN{{OFS="\\t"}} '

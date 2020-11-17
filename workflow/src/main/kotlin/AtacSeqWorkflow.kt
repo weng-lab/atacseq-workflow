@@ -27,7 +27,6 @@ fun macs2Input(exp: String, v: TagAlignReplicate): Bam2taOutput = Bam2taOutput(e
 
 val atacSeqWorkflow = workflow("atac-seq-workflow") {
     val params = params<AtacSeqParams>()
-    val forceSingleEnd = true 
     
     val trimAdaptorInputs =  params.experiments.flatMap { exp ->
         exp.replicates
@@ -59,7 +58,7 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
             .filter { it is FilteredBamReplicate && it.bam !== null }
             .map { bam2taInput(exp.name, it as FilteredBamReplicate) }
     }.toFlux()
-    val bam2taInput = filterOutput.concatWith(bam2taTaskInput).filter { params.tasks.contains("bam2ta") }.map { Bam2taInput(it.exp, it.bam, it.repName, if(forceSingleEnd) false else it.pairedEnd) }
+    val bam2taInput = filterOutput.concatWith(bam2taTaskInput).filter { params.tasks.contains("bam2ta") }.map { Bam2taInput(it.exp, it.bam, it.repName, it.pairedEnd) }
     val bam2taOutput = bam2taTask("bam2ta", bam2taInput)
 
     val macs2TaskInput = params.experiments.flatMap { exp ->
@@ -69,7 +68,7 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
     }.toFlux()
   
     // Individual true replicates
-    val macs2TrInput = bam2taOutput.concatWith(macs2TaskInput).filter { params.tasks.contains("macs2") || params.tasks.contains("macs2-tr") }.map { Macs2Input(it.exp, it.ta, it.repName, it.pairedEnd) }
+    val macs2TrInput = bam2taOutput.concatWith(macs2TaskInput).filter { params.tasks.contains("macs2") || params.tasks.contains("macs2-tr") }.map { Macs2Input(it.exp, it.ta, it.repName) }
     val macs2TrOutput = macs2Task(macs2TrInput, "tr")
 
     val sprInput = bam2taOutput.filter { params.tasks.contains("spr") }.map { SprInput(it.exp, it.repName, it.ta, it.pairedEnd) }
@@ -90,33 +89,34 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
 
     if (params.tasks.contains("idr")) {
         val macs2CombinedOutput: Flux<Triple<String, String, Pair<File, File>>> = macs2TrOutput
-            // Flux<Macs2Output> -> Flux<Triple<exp, rep, Macs2Output>>
-            .map { Triple(it.exp, it.repName, it) }
-            // ... -> Flux<GroupedFlux<String, Triple<exp, rep, Macs2Output>>>
-            .groupBy { it.first }
-            // ... -> Flux<List<Triple<exp, rep, Macs2Output>>>
+            // Flux<Macs2Output> -> Flux<GroupedFlux<String, Macs2Output>>
+            .groupBy { it.exp }
+            // ... -> Flux<List<Macs2Output>>
             .flatMap { it.collectList() }
             // ... -> Flux<Triple<exp, combination, Pair<File, File>>>
             .flatMap {
                 elementPairs(it).map {
-                    val first = it.first
-                    val second = it.second
-                    Triple(first.first, "${first.second}-${second.second}", Pair(first.third.npeak, second.third.npeak))
+                    val (first, second) = if (it.first.repName.compareTo(it.second.repName) < 0) {
+                        Pair(it.first, it.second)
+                    } else {
+                        Pair(it.second, it.first)
+                    }
+                    Triple(first.exp, "${first.repName}-${second.repName}", Pair(first.npeak, second.npeak))
                 }.toFlux()
             }
 
         val poolTaInput: Flux<PoolTaInput> = bam2taOutput
-            .map { Triple(it.exp, it.repName, it) }
-            .groupBy { it.first }
+            .groupBy { it.exp }
             .flatMap { it.collectList() }
             .handle { it, sink ->
                 if (it.size > 1) {
-                    sink.next(PoolTaInput(it[0].first, it[0].third.pairedEnd, it[0].second, it.map { it.third.ta }, "rep"))
+                    val sorted = it.sortedBy { it.repName }
+                    sink.next(PoolTaInput(it[0].exp, it[0].pairedEnd, it[0].repName, sorted.map { it.ta }, "rep"))
                 }
             }
         val poolTaOutput = poolTaTask(poolTaInput)
 
-        val macs2PooledInput = poolTaOutput.map { Macs2Input(it.exp, it.pooledTa, "pooled", if(forceSingleEnd) false else it.pairedEnd) }
+        val macs2PooledInput = poolTaOutput.map { Macs2Input(it.exp, it.pooledTa, "pooled") }
         // Combined pooled replicates
         val macs2PooledOutput = macs2Task(macs2PooledInput, "pooled")
 
@@ -165,8 +165,8 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
 
         val macs2PrInput = sprOut.flatMap {
             listOf(
-                Macs2Input(it.exp, it.prOne, "${it.repName}-pr1", if(forceSingleEnd) false else it.pairedEnd),
-                Macs2Input(it.exp, it.prTwo, "${it.repName}-pr2", if(forceSingleEnd) false else it.pairedEnd)
+                Macs2Input(it.exp, it.prOne, "${it.repName}-pr1"),
+                Macs2Input(it.exp, it.prTwo, "${it.repName}-pr2")
             ).toFlux()
         }
         // Pseudo replicates
@@ -181,7 +181,8 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
             .handle { it, sink ->
                 // If not two, then one of the macs2 tasks failed; should be logged
                 if (it.size == 2) {
-                    sink.next(Pair("${it[0].exp}.${it[0].repName.split("-")[0]}", Pair("pr", Pair(it[0].npeak, it[1].npeak))))
+                    val sorted = it.sortedBy { it.repName }
+                    sink.next(Pair("${it[0].exp}.${it[0].repName.split("-")[0]}", Pair("pr", Pair(sorted[0].npeak, sorted[1].npeak))))
                 }
                 
             }

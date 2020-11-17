@@ -65,14 +65,14 @@ def bam2ta_se(bam, out_dir, prefix=None):
     return ta
 
 
-def bam2ta_pe(bam, nth, out_dir, prefix=None):
+def bam2ta_pe(bam, nth, mem_gb, out_dir, prefix=None):
     if prefix is None:
         prefix = os.path.basename(strip_ext_bam(bam))
     prefix = os.path.join(out_dir, prefix)
     ta = '{}.tagAlign.gz'.format(prefix)
     # intermediate files
     bedpe = '{}.bedpe.gz'.format(prefix)
-    nmsrt_bam = samtools_name_sort(bam, nth, out_dir)
+    nmsrt_bam = samtools_name_sort(bam, nth, mem_gb, out_dir)
 
     cmd1 = 'LC_COLLATE=C bedtools bamtobed -bedpe -mate1 -i {} | '
     # cmd1 += 'sort -k1,1 -k2,2n -k3,3n | '
@@ -126,7 +126,7 @@ def main():
 
     log.info('Converting BAM to TAGALIGN...')
     if args.paired_end:
-        ta = bam2ta_pe(args.bam, args.nth, args.out_dir, args.output_prefix)
+        ta = bam2ta_pe(args.bam, args.nth, args.mem_gb, args.out_dir, args.output_prefix)
     else:
         ta = bam2ta_se(args.bam, args.out_dir, args.output_prefix)
 

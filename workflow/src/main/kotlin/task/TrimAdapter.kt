@@ -8,7 +8,8 @@ import org.reactivestreams.Publisher
 
 data class TrimAdapterParams(
         val cutAdaptParam: String = "-e 0.1 -m 5",
-        val nth: Int = 4
+        val nth: Int = 4,
+        val autoDetectAdapter: Boolean = false
 )
 
 data class TrimAdapterInput(
@@ -27,7 +28,7 @@ data class TrimAdapterOutput(
 fun WorkflowBuilder.trimAdapterTask(name: String, i: Publisher<TrimAdapterInput>) = this.task<TrimAdapterInput, TrimAdapterOutput>(name, i) {
     val params = taskParams<TrimAdapterParams>()
 
-    dockerImage = "genomealmanac/atacseq-trim-adapters:1.1.6"
+    dockerImage = "genomealmanac/atacseq-trim-adapters:1.1.7"
 
     val rep = input.rep
     output =
@@ -57,15 +58,30 @@ fun WorkflowBuilder.trimAdapterTask(name: String, i: Publisher<TrimAdapterInput>
         throw IllegalArgumentException("Expected PE or SE")
     }
     val adapters: String? = if (rep is FastqReplicatePE) {
-        rep.adaptorR1?.let { r1 ->
-            rep.adaptorR2?.let { r2 ->
-                "${r1.dockerPath} ${r2.dockerPath}"
+        if (rep.adaptors != null) {
+            rep.adaptors.dockerPath
+        } else {
+            rep.adaptorR1?.let { r1 ->
+                rep.adaptorR2?.let { r2 ->
+                    r1.zip(r2).joinToString(" ") { it.toList().joinToString(",") { it } }
+                }
             }
         }
     } else if (rep is FastqReplicateSE) {
-        rep.adaptor?.let {
-            it.dockerPath
+        if (rep.adaptors != null) {
+            rep.adaptors.dockerPath
+        } else {
+            rep.adaptor?.let {
+                it.joinToString(",") { it }
+            }
         }
+    } else {
+        throw IllegalArgumentException("Expected PE or SE")
+    }
+    val adapter: String? = if (rep is FastqReplicatePE) {
+        rep.adaptorAll
+    } else if (rep is FastqReplicateSE) {
+        rep.adaptorAll
     } else {
         throw IllegalArgumentException("Expected PE or SE")
     }
@@ -74,8 +90,9 @@ fun WorkflowBuilder.trimAdapterTask(name: String, i: Publisher<TrimAdapterInput>
             /app/encode_task_trim_adapter.py \
                 ${fastqs} \
                 ${if (adapters != null) "--adapters $adapters" else ""} \
+                ${if (adapter != null) "--adapter $adapter" else ""} \
                 ${if (rep is FastqReplicatePE) "--paired-end" else ""} \
-                ${if (adapters != null) "--auto-detect-adapter" else ""} \
+                ${if (params.autoDetectAdapter) "--auto-detect-adapter" else ""} \
                 --cutadapt-param ' ${params.cutAdaptParam}' \
                 --nth ${params.nth} \
                 --output-prefix ${input.exp}.${rep.name} \

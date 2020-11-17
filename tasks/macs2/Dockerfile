@@ -10,32 +10,36 @@
 
 FROM atacseq-common:1.0.0 as common
 
-FROM alpine:3.8
+FROM ubuntu@sha256:d1d454df0f579c6be4d8161d227462d69e163a8ff9d20a847533989cf0c94d90
 
-# macs2 binaries and prerequisites
-RUN apk add --no-cache xz-dev bzip2-dev git py3-pip bash grep coreutils gzip build-base zlib-dev libpng-dev python3 python3-dev libstdc++ jpeg-dev && \
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y \
+    libncurses5-dev libcurl4-openssl-dev libfreetype6-dev zlib1g-dev \
+    python3 python3-setuptools python3-pip \
+    git wget unzip ghostscript pkg-config libboost-dev \
+    r-base libmysqlclient-dev \
+    && rm -rf /var/lib/apt/lists/* && \
     ln -s /usr/bin/python3 /usr/bin/python && \
-    apk add --no-cache mysql-dev linux-headers && \
+    wget https://github.com/openssl/openssl/archive/OpenSSL_1_0_2t.tar.gz && \
+    tar zxvf OpenSSL_1_0_2t.tar.gz && \
+    cd openssl-OpenSSL_1_0_2t/ && ./config && make && make install && \
+    cd ../ && rm -rf openssl-OpenSSL_1_0_2t* && rm /usr/bin/openssl && \
+    ln -s /usr/local/ssl/bin/openssl /usr/bin/openssl && \
     git clone https://github.com/weng-lab/kent && \
     cd kent/src/lib && make CFLAGS=-DLIBUUID_NOT_PRESENT && cd ../jkOwnLib && make && cd ../htslib && make && \
     mkdir -p /root/bin/x86_64 && cd ../utils/bedClip && make && cd ../bedGraphToBigWig && make && \
     cd ../bedToBigBed && make && \
     cd / && rm -rf kent && mv /root/bin/x86_64/* /bin && \
+    python3 -m pip install --no-cache-dir numpy && \
+    python3 -m pip install --no-cache-dir Cython && \
+    python3 -m pip install --no-cache-dir macs2==2.2.4 && \
+    python3 -m pip install --no-cache-dir pandas matplotlib && \
     git clone https://github.com/arq5x/bedtools2 && cd bedtools2 && make && \
     mv bin/* /bin && cd .. && rm -rf bedtools2 && \
-    wget https://github.com/samtools/samtools/releases/download/1.9/samtools-1.9.tar.bz2 && \
-    tar xvjf samtools-1.9.tar.bz2 && cd samtools-1.9 && \
-    ./configure --without-curses --disable-lzma --disable-bz2 && \
-    make && make install && cd .. && \
-    rm -r samtools-1.9 && rm samtools-1.9.tar.bz2 && \
-    wget https://github.com/samtools/htslib/releases/download/1.9/htslib-1.9.tar.bz2 && \
-    tar xvjf htslib-1.9.tar.bz2 && cd htslib-1.9 && \
-    ./configure && \
-    make && make install && cd .. && \
-    rm -r htslib-1.9 && rm htslib-1.9.tar.bz2 && \
-    python3 -m pip install --no-cache-dir numpy macs2 cython && \
-    python3 -m pip install --no-cache-dir pandas matplotlib && \
-    apk del py3-pip build-base python3-dev git libpng-dev linux-headers
+    git clone --branch 1.9 --single-branch https://github.com/samtools/samtools.git && \
+    git clone --branch 1.9 --single-branch https://github.com/samtools/htslib.git && \
+    cd samtools && make && make install && cd ../ && rm -rf samtools* && \
+    cd htslib && make && make install && cd ../ && rm -rf htslib*
 
 # common scripts
 COPY --from=common /app/common /app/common

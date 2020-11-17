@@ -8,12 +8,11 @@ FROM atacseq-common:1.0.0 as common
 
 FROM alpine:3.8
 
+# cutadapt
+RUN apk add --no-cache bash python3 python3-dev build-base py3-pip py3-setuptools && python3 -m pip install cutadapt==2.5 && apk del py3-pip build-base 
+
 # scripts
 COPY src/ /app
 
 # common scripts
 COPY --from=common /app/common /app/common
-
-# cutadapt
-RUN apk add --no-cache bash python3 python3-dev build-base py3-pip py3-setuptools && python3 -m pip install cutadapt && apk del py3-pip build-base 
-

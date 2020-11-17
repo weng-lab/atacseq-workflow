@@ -12,14 +12,13 @@ data class Macs2Params(
         val pvalThresh: Double = 0.01,
         val smoothWin: Int = 150,
         val makeSignal: Boolean = true,
-        val regexBfiltPeakChrName: String = ""
+        val regexBfiltPeakChrName: String = "chr[\\dXY]+"
 )
 
 data class Macs2Input(
         val exp: String,
         val ta: File,
-        val repName: String,
-        val pairedEnd: Boolean
+        val repName: String
 )
 
 data class Macs2Output(
@@ -36,7 +35,7 @@ data class Macs2Output(
 fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>, peak: String) = this.task<Macs2Input, Macs2Output>("macs2-$peak", i, "macs2") {
     val params = taskParams<Macs2Params>()
   
-    dockerImage = "genomealmanac/atacseq-macs2:2.2.15"
+    dockerImage = "genomealmanac/atacseq-macs2:2.2.21"
 
     val prefix = "macs2/${input.exp}.${input.repName}"
     val npPrefix = "$prefix.pval${params.pvalThresh}.${capNumPeakFilePrefix(params.capNumPeak)}"
@@ -78,6 +77,7 @@ fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>, peak: String) = this.tas
                 ${input.ta.dockerPath} \
                 --out-dir $outputsDir/macs2 \
                 --output-prefix ${input.exp}.${input.repName} \
+                ${if (params.gensz != null) "--gensz ${params.gensz}" else ""} \
                 --chrsz ${params.chrsz.dockerPath} \
                 --pval-thresh ${params.pvalThresh} \
                 --smooth-win ${params.smoothWin}

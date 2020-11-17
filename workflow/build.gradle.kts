@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.genomealmanac.atacseq"
-version = "0.3.0"
+version = "0.3.1"
 val artifactID = "atacseq-workflow"
 
 repositories {
@@ -18,7 +18,7 @@ repositories {
 
 dependencies {
     compile(kotlin("stdlib-jdk8"))
-    compile("io.krews", "krews", "0.10.6")
+    compile("io.krews", "krews", "0.10.11")
 }
 
 application {

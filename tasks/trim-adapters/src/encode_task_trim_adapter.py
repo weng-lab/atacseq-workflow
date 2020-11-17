@@ -70,7 +70,7 @@ def parse_arguments(debug=False):
         if os.path.exists(args.adapters[0]):  # it's TSV
             args.adapters = read_tsv(args.adapters[0])
         else:
-            args.adapters = [a.split(0) for a in args.adapters]  # make it a matrix
+            args.adapters = [a.split(",") for a in args.adapters]  # make it a matrix
 
     # if adapter not given
     if args.adapter or not args.adapters:  # fill empty string in adapter list

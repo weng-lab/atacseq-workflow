@@ -1,2 +1,2 @@
 IMAGE_NAME=genomealmanac/atacseq-macs2
-IMAGE_VERSION=2.2.15
+IMAGE_VERSION=2.2.21

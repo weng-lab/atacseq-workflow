@@ -19,22 +19,22 @@ data class PoolTaOutput(
 )
 
 fun WorkflowBuilder.poolTaTask(i: Publisher<PoolTaInput>) = this.task<PoolTaInput, PoolTaOutput>("pool-ta", i) {
-    dockerImage = "genomealmanac/atacseq-pool-ta:1.1.0"
+    dockerImage = "genomealmanac/atacseq-poolta:1.1.2"
 
     val prefix = "pool-ta/${input.exp}.${input.prefix}"
     output =
             PoolTaOutput(
                     exp = input.exp,
                     pairedEnd = input.pairedEnd,
-                    pooledTa = OutputFile("$prefix.tn5.pooled.tagAlign.gz")
+                    pooledTa = OutputFile("$prefix.pooled.tagAlign.gz")
             )
 
     val alltas = input.tas.map { it.dockerPath }.joinToString(" ")
     command =
             """
             /app/encode_pool_ta.py \
+                ${alltas} \
                 --out-dir $outputsDir/pool-ta \
-                --prefix ${input.prefix}
-                ${alltas}
+                --prefix ${input.exp}.${input.prefix}
             """
 }

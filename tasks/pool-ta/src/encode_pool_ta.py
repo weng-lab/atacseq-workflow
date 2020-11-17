@@ -3,11 +3,12 @@
 # ENCODE DCC TAGALIGN pooler wrapper
 # Author: Jin Lee (leepc12@gmail.com)
 
+# Copied 0a69b767064edf7b0edc7af4aaabb09e0fc23b3d
+
 import sys
 import os
 import argparse
-from encode_lib_common import (
-    log, ls_l, make_hard_link, mkdir_p, run_shell_cmd, strip_ext_ta)
+from common.encode_common import *
 
 
 def parse_arguments():

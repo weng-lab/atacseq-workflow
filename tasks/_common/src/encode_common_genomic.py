@@ -3,6 +3,9 @@
 # ENCODE DCC common functions
 # Author: Jin Lee (leepc12@gmail.com)
 
+# Changes
+# - peak_to_bigbed: zcat -f chrom sizes
+
 import math
 import os
 import gzip
@@ -460,7 +463,7 @@ def peak_to_bigbed(peak, peak_type, chrsz, out_dir):
     with open(as_file, 'w') as fp:
         fp.write(as_file_contents)
 
-    cmd1 = "cat {} > {}".format(chrsz, chrsz_tmp)
+    cmd1 = "zcat -f {} > {}".format(chrsz, chrsz_tmp)
     run_shell_cmd(cmd1)
     cmd2 = "zcat -f {} | LC_COLLATE=C sort -k1,1 -k2,2n | "
     cmd2 += 'awk \'BEGIN{{OFS="\\t"}} {{if ($5>1000) $5=1000; '
