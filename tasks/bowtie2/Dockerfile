@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y \
     python3 python3-setuptools python3-pip \
     git wget unzip ghostscript pkg-config libboost-dev \
     && \
+    python3 -m pip install SAMstats==0.2.1 && \
     wget https://github.com/openssl/openssl/archive/OpenSSL_1_0_2t.tar.gz && tar zxvf OpenSSL_1_0_2t.tar.gz && cd openssl-OpenSSL_1_0_2t/ && ./config && make && make install && cd ../ && rm -rf openssl-OpenSSL_1_0_2t* && rm /usr/bin/openssl && ln -s /usr/local/ssl/bin/openssl /usr/bin/openssl && \
     ln -s /usr/bin/python3 /usr/bin/python && \
     wget https://github.com/BenLangmead/bowtie2/releases/download/v2.3.4.3/bowtie2-2.3.4.3-linux-x86_64.zip && \
