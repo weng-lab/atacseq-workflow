@@ -27,7 +27,8 @@ data class Bowtie2Output(
         val exp: String,
         val repName: String,
         val pairedEnd: Boolean,
-        val bam: File
+        val bam: File,
+        val samstatsQC: File
 )
 
 fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this.task<Bowtie2Input, Bowtie2Output>(name, i) {
@@ -41,7 +42,8 @@ fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this
                     exp = input.exp,
                     repName = input.repName,
                     pairedEnd = input.pairedEnd,
-                    bam = OutputFile("$prefix.srt.bam")
+                    bam = OutputFile("$prefix.srt.bam"),
+                    samstatsQC = OutputFile("$prefix.samstats.qc")
             )
 
     command =
@@ -56,5 +58,9 @@ fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this
                 --nth ${params.nth} \
                 --out-dir $outputsDir/bowtie2 \
                 --output-prefix ${input.exp}.${input.repName}
+
+            samtools sort -n -@ ${params.nth} -m 1G -O sam -T /tmp/srt-temp-bam $outputsDir/${prefix}.srt.bam | \
+              SAMstats --sorted_sam_file - --outf $outputsDir/${prefix}.samstats.qc
+
             """
 }
