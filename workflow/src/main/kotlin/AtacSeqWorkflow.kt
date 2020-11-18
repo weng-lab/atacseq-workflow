@@ -22,12 +22,14 @@ data class AtacSeqParams(
 )
 
 fun filterInput(exp: String, v: BamReplicate): Bowtie2Output = Bowtie2Output( exp, v.name, v.pairedend, v.bam!!)
-fun bam2taInput(exp: String, v: FilteredBamReplicate): FilterOutput = FilterOutput( exp, v.name, v.pairedend, v.bam!!, null, v.bam, null, null)
+fun bam2taInput(exp: String, v: FilteredBamReplicate): FilterOutput = FilterOutput( exp, v.name, v.pairedend, v.bam!!, v.bai!!, v.bam, v.bai, null)
+fun tsseInput(exp: String, v: FilteredBamReplicate): FilterOutput = FilterOutput( exp, v.name, v.pairedend, v.bam!!, v.bai!!, v.bam, v.bai, null)
 fun macs2Input(exp: String, v: TagAlignReplicate): Bam2taOutput = Bam2taOutput(exp, v.ta!!, v.name, v.pairedend)
 
 val atacSeqWorkflow = workflow("atac-seq-workflow") {
     val params = params<AtacSeqParams>()
-    
+
+
     val trimAdaptorInputs =  params.experiments.flatMap { exp ->
         exp.replicates
             .filter { (it is FastqReplicatePE || it is FastqReplicateSE) && ( params.tasks.contains("trim-adapter") ) }
@@ -40,19 +42,21 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
             .filter { (it is MergedFastqReplicateSE || it is MergedFastqReplicatePE)}
             .map { if(it is MergedFastqReplicateSE) TrimAdapterOutput(exp.name, it.name, false, it.merged, null) else TrimAdapterOutput(exp.name, it.name, true, (it as MergedFastqReplicatePE).mergedR1,(it as MergedFastqReplicatePE).mergedR2) }
     }.toFlux()
-    
+
+
     val bowtie2Input = trimAdapterOutput.concatWith(bowtieInputs).filter { params.tasks.contains("bowtie2") }.map { Bowtie2Input(it.exp, it.repName, it.pairedEnd, it.mergedR1, it.mergedR2) }
     val bowtie2Output = bowtie2Task("bowtie2", bowtie2Input)
-    
+
     val filterBamInput = params.experiments.flatMap { exp ->
         exp.replicates
             .filter { it is BamReplicate && it.bam !== null }
             .map { filterInput(exp.name, it as BamReplicate) }
     }.toFlux()
 
+
     val filterInput = bowtie2Output.concatWith(filterBamInput).filter {  params.tasks.contains("filter-alignments") }.map { FilterInput(it.exp, it.bam, it.repName, it.pairedEnd) }
     val filterOutput = filterTask("filter-alignments", filterInput)
-  
+
     val bam2taTaskInput = params.experiments.flatMap { exp ->
         exp.replicates
             .filter { it is FilteredBamReplicate && it.bam !== null }
@@ -61,12 +65,22 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
     val bam2taInput = filterOutput.concatWith(bam2taTaskInput).filter { params.tasks.contains("bam2ta") }.map { Bam2taInput(it.exp, it.bam, it.repName, it.pairedEnd) }
     val bam2taOutput = bam2taTask("bam2ta", bam2taInput)
 
+
+    val tsseTaskInput = params.experiments.flatMap { exp ->
+        exp.replicates
+            .filter { it is FilteredBamReplicate && it.bam !== null }
+            .map { tsseInput(exp.name, it as FilteredBamReplicate) }
+    }.toFlux()
+    val tsseInput = filterOutput.concatWith(tsseTaskInput).filter { params.tasks.contains("tsse") }.map { TsseInput(it.exp, it.bam, it.repName, it.pairedEnd) }
+    val tsseOutput = tsseTask("tsse", tsseInput)
+
     val macs2TaskInput = params.experiments.flatMap { exp ->
         exp.replicates
             .filter { it is TagAlignReplicate && it.ta !== null }
             .map { macs2Input(exp.name, it as TagAlignReplicate) }
     }.toFlux()
-  
+
+
     // Individual true replicates
     val macs2TrInput = bam2taOutput.concatWith(macs2TaskInput).filter { params.tasks.contains("macs2") || params.tasks.contains("macs2-tr") }.map { Macs2Input(it.exp, it.ta, it.repName) }
     val macs2TrOutput = macs2Task(macs2TrInput, "tr")
@@ -162,6 +176,7 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
                 }
             }
         idrTask(idrInput, "tr")
+        overlapTask(idrInput, "tr")
 
         val macs2PrInput = sprOut.flatMap {
             listOf(
@@ -184,7 +199,7 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
                     val sorted = it.sortedBy { it.repName }
                     sink.next(Pair("${it[0].exp}.${it[0].repName.split("-")[0]}", Pair("pr", Pair(sorted[0].npeak, sorted[1].npeak))))
                 }
-                
+
             }
 
         val idrInputPr: Flux<IdrInput> = Flux.merge(
@@ -227,8 +242,9 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
                 }
             }
         idrTask(idrInputPr, "pr")
+        overlapTask(idrInputPr, "pr")
     }
- 
+
     if (params.tasks.contains("zpeaks")) {
         val zpeaksInput = filterOutput
             .map {

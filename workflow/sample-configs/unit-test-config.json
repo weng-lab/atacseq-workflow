@@ -1,0 +1,353 @@
+{
+    "params": {
+        "tasks": [
+            "trim-adapter",
+            "bowtie2",
+            "filter-alignments",
+            "tsse",
+            "bam2ta",
+            "macs2",
+            "spr",
+            "idr",
+            "overlap"
+        ],
+        "experiments": [
+	 {
+                "replicates": [
+                    {
+                        "-type": "model.FastqReplicatePE",
+                        "adaptor-all": "CTGTCTCTTATA",
+                        "fastqs-r1": [
+                            {
+                                "-type": "krews.file.HttpInputFile",
+                                "path": "ENCFF341MYG.fastq.gz",
+                                "url":
+                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep1/pair1/ENCFF341MYG.subsampled.400.fastq.gz"
+                            },
+                            {
+                                "-type": "krews.file.HttpInputFile",
+                                "path": "ENCFF106QGY.fastq.gz",
+                                "url":
+                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep1/pair1/ENCFF106QGY.subsampled.400.fastq.gz"
+                            }
+                            ],
+
+                        "fastqs-r2": [
+                            {
+                                "-type": "krews.file.HttpInputFile",
+                                "path": "ENCFF248EJF.fastq.gz",
+                                "url":
+                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep1/pair2/ENCFF248EJF.subsampled.400.fastq.gz"
+                            },
+                            {
+                                "-type": "krews.file.HttpInputFile",
+                                "path": "ENCFF368TYI.fastq.gz",
+                                "url":
+                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep1/pair2/ENCFF368TYI.subsampled.400.fastq.gz"
+                            }
+                        ],
+                        "name": "rep1"
+                    },
+
+
+
+
+                    {
+                        "-type": "model.FastqReplicatePE",
+                        "adaptor-all": "CTGTCTCTTATA",
+                        "fastqs-r1": [
+                            {
+                                "-type": "krews.file.HttpInputFile",
+                                "path": "ENCFF641SFZ.fastq.gz",
+                                "url":
+                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair1/ENCFF641SFZ.subsampled.400.fastq.gz"
+                            },
+                            {
+                                "-type": "krews.file.HttpInputFile",
+                                "path": "ENCFF751XTV.fastq.gz",
+                                "url":
+                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair1/ENCFF751XTV.subsampled.400.fastq.gz"
+                            },
+                            {
+                                "-type": "krews.file.HttpInputFile",
+                                "path": "ENCFF927LSG.fastq.gz",
+                                "url":
+                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair1/ENCFF927LSG.subsampled.400.fastq.gz"
+                            },
+                            {
+                                "-type": "krews.file.HttpInputFile",
+                                "path": "ENCFF859BDM.fastq.gz",
+                                "url":
+                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair1/ENCFF859BDM.subsampled.400.fastq.gz"
+                            },
+                            {
+                                "-type": "krews.file.HttpInputFile",
+                                "path": "ENCFF193RRC.fastq.gz",
+                                "url":
+                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair1/ENCFF193RRC.subsampled.400.fastq.gz"
+                            },
+                            {
+                                "-type": "krews.file.HttpInputFile",
+                                "path": "ENCFF366DFI.fastq.gz",
+                                "url":
+                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair1/ENCFF366DFI.subsampled.400.fastq.gz"
+                            }
+                        ],
+
+
+                        "fastqs-r2": [
+                            {
+                                "-type": "krews.file.HttpInputFile",
+                                "path": "ENCFF031ARQ.fastq.gz",
+                                "url":
+                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair2/ENCFF031ARQ.subsampled.400.fastq.gz"
+                            },
+                            {
+                                "-type": "krews.file.HttpInputFile",
+                                "path": "ENCFF590SYZ.fastq.gz",
+                                "url":
+                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair2/ENCFF590SYZ.subsampled.400.fastq.gz"
+                            },
+                            {
+                                "-type": "krews.file.HttpInputFile",
+                                "path": "ENCFF734PEQ.fastq.gz",
+                                "url":
+                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair2/ENCFF734PEQ.subsampled.400.fastq.gz"
+                            },
+                            {
+                                "-type": "krews.file.HttpInputFile",
+                                "path": "ENCFF007USV.fastq.gz",
+                                "url":
+                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair2/ENCFF007USV.subsampled.400.fastq.gz"
+                            },
+                            {
+                                "-type": "krews.file.HttpInputFile",
+                                "path": "ENCFF886FSC.fastq.gz",
+                                "url":
+                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair2/ENCFF886FSC.subsampled.400.fastq.gz"
+                            },
+                            {
+                                "-type": "krews.file.HttpInputFile",
+                                "path": "ENCFF573UXK.fastq.gz",
+                                "url":
+                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair2/ENCFF573UXK.subsampled.400.fastq.gz"
+                            }
+                        ],
+                        "name": "rep2"
+                    }
+                ],
+                  "name": "ENCSR356KRQ"
+	              }
+
+        ]
+    },
+
+
+    "slurm": {
+        "job-completion-poll-interval": 15
+    },
+
+
+    "task": {
+        "macs2": {
+            "params": {
+                "chrsz": {
+                    "path": "GRCh38_EBV.chrom.sizes.tsv",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38_EBV.chrom.sizes.tsv",
+                    "-type": "krews.file.LocalInputFile"
+                },
+
+                "blacklist": {
+                    "path": "Encode-GRCh38.blacklist.bed.gz",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38.blacklist.bed.gz",
+                    "-type": "krews.file.LocalInputFile"
+                },
+
+                "gensz": "hs",
+                "smooth-win": 150,
+		            "regex-bfilt-peak-chr-name": "chr[\\dXY]+"
+            },
+
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "32G",
+                    "time": "12:00:00"
+                },
+                "partition": "12hours",
+                "cpus": 8
+            }
+        },
+
+
+        "trim-adapter": {
+            "params": {
+                "nth": 4
+            },
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "16G",
+                    "time": "12:00:00"
+                },
+                "partition": "12hours",
+                "cpus": "4"
+            }
+        },
+
+
+        "filter-alignments": {
+            "params": {
+		            "chrsz": {
+                    "path": "GRCh38_EBV.chrom.sizes.tsv.gz",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38_EBV.chrom.sizes.tsv.gz",
+                    "-type": "krews.file.LocalInputFile"
+                },
+                "nth": 4,
+	              "mem-gb": 8
+            },
+
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "16G",
+                    "time": "12:00:00"
+                },
+                "partition": "12hours",
+                "cpus": "4"
+            }
+        },
+
+
+        "bam2ta": {
+            "params": {
+              "nth": 8,
+              "mem-gb": 16
+           },
+
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "32G",
+                    "time": "12:00:00"
+                },
+                "partition": "12hours",
+                "cpus": 8
+            }
+        },
+
+
+        "bowtie2": {
+            "params": {
+                "idx-tar": {
+                    "path": "GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.tar",
+                    "local-path": "/home/reimonnt/hg38/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.tar",
+                    "-type": "krews.file.LocalInputFile"
+                },
+                "nth": 8,
+                "mem-gb": 16
+            },
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "32G",
+                    "time": "5-00:00:00"
+                },
+                "partition": "5days",
+                "cpus": 8
+            }
+        },
+
+
+        "spr": {
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "8G",
+                    "time": "12:00:00"
+                },
+                "partition": "12hours",
+                "cpus": "2"
+            }
+        },
+
+
+        "idr": {
+            "params": {
+              "chrsz": {
+                    "path": "GRCh38_EBV.chrom.sizes.tsv",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38_EBV.chrom.sizes.tsv",
+                    "-type": "krews.file.LocalInputFile"
+                },
+
+                "blacklist": {
+                    "path": "Encode-GRCh38.blacklist.bed.gz",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38.blacklist.bed.gz",
+                    "-type": "krews.file.LocalInputFile"
+                }
+            },
+
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "16G",
+                    "time": "12:00:00"
+                },
+                "partition": "12hours",
+                "cpus": "4"
+            }
+
+        },
+
+
+        "overlap": {
+            "params": {
+              "chrsz": {
+                    "path": "GRCh38_EBV.chrom.sizes.tsv",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38_EBV.chrom.sizes.tsv",
+                    "-type": "krews.file.LocalInputFile"
+                },
+
+                "blacklist": {
+                    "path": "Encode-GRCh38.blacklist.bed.gz",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38.blacklist.bed.gz",
+                    "-type": "krews.file.LocalInputFile"
+                }
+            },
+
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "16G",
+                    "time": "12:00:00"
+                },
+                "partition": "12hours",
+                "cpus": "4"
+            }
+
+        },
+
+
+        "tsse": {
+            "params": {
+              "chrsz": {
+                    "path": "GRCh38_EBV.chrom.sizes.tsv",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38_EBV.chrom.sizes.tsv",
+                    "-type": "krews.file.LocalInputFile"
+                },
+
+                "tss": {
+                    "path": "Encode_TSS_Enrich.bed.gz",
+                    "local-path": "/home/reimonnt/hg38/Encode_TSS_Enrich.bed.gz",
+                    "-type": "krews.file.LocalInputFile"
+                },
+
+                "read-len": 100
+            },
+
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "8G",
+                    "time": "12:00:00"
+                },
+                "partition": "12hours",
+                "cpus": "2"
+            }
+        }
+
+
+    },
+    "working-dir": "/home/reimonnt/atacseq-test-dir"
+}
