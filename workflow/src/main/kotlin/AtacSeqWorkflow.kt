@@ -22,8 +22,7 @@ data class AtacSeqParams(
     val tasks: List<String> = listOf("trim-adapter","bowtie2","filter-alignments","bam2ta","macs2")
 )
 
-fun filterInput(exp: String, v: BamReplicate): Bowtie2Output = Bowtie2Output( exp, v.name, v.pairedend, v.bam!!)
-fun bt2SamstatsInput(exp: String, v: BamReplicate): Bowtie2Output = Bowtie2Output( exp, v.name, v.pairedend, v.bam!!)
+fun filterInput(exp: String, v: BamReplicate): Bowtie2Output = Bowtie2Output( exp, v.name, v.pairedend, v.bam!!, v.bam!!)
 fun bam2taInput(exp: String, v: FilteredBamReplicate): FilterOutput = FilterOutput( exp, v.name, v.pairedend, v.bam!!, v.bai!!, v.bam, v.bai, null)
 fun tsseInput(exp: String, v: FilteredBamReplicate): FilterOutput = FilterOutput( exp, v.name, v.pairedend, v.bam!!, v.bai!!, v.bam, v.bai, null)
 fun macs2Input(exp: String, v: TagAlignReplicate): Bam2taOutput = Bam2taOutput(exp, v.ta!!, v.name, v.pairedend)
@@ -56,16 +55,6 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
     }.toFlux()
     val filterInput = bowtie2Output.concatWith(filterBamInput).filter {  params.tasks.contains("filter-alignments") }.map { FilterInput(it.exp, it.bam, it.repName, it.pairedEnd) }
     val filterOutput = filterTask("filter-alignments", filterInput)
-
-    // BT2 SAMSTATS TASK
-    val bt2SamstatsBamInput = params.experiments.flatMap { exp ->
-        exp.replicates
-            .filter { it is BamReplicate && it.bam !== null }
-            .map { bt2SamstatsInput(exp.name, it as BamReplicate) }
-    }.toFlux()
-    val bt2SamstatsInput = bowtie2Output.concatWith(bt2SamstatsBamInput).filter {  params.tasks.contains("bt2-samstats") }.map { Bt2SamstatsInput(it.exp, it.bam, it.repName, it.pairedEnd) }
-    val bt2SamstatsOutput = bt2SamstatsTask("bt2-samstats", bt2SamstatsInput)
-
 
     //BAM2TA task
     val bam2taTaskInput = params.experiments.flatMap { exp ->

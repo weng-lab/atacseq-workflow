@@ -31,6 +31,8 @@ data class TsseOutput(
 fun WorkflowBuilder.tsseTask(name: String, i: Publisher<TsseInput>) = this.task<TsseInput, TsseOutput>(name, i) {
     val params = taskParams<TsseParams>()
 
+    // NOTE: This image should probably be updated to a local smaller image under /tasks
+    // This pulls the entire atac-seq-pipeline image created by the DCC
     dockerImage = "encodedcc/atac-seq-pipeline:v1.8.0"
 
     val prefix = "tsse/${input.exp}.${input.repName}"
@@ -43,12 +45,12 @@ fun WorkflowBuilder.tsseTask(name: String, i: Publisher<TsseInput>) = this.task<
                     tssEnrichPng = OutputFile("$prefix.tss_enrich.png"),
                     tssEnrichLargPng = OutputFile("$prefix.large_tss_enrich.png")
             )
-
+    // This task needs a bam index, and it writes a new even if you copy the .bam.bai file
+    // However /inputs is a read-only filesystem, so it has trouble writing the bai
+    // As a hacky work-around, I copy the input to /tmp so that it can happily write a .bai file
     command =
             """
             cp ${input.bam.dockerPath} /tmp/nodup-temp-alignments.bam
-
-            cd /tmp
 
             encode_task_tss_enrich.py \
                 --read-len ${params.readLen} \
@@ -57,8 +59,8 @@ fun WorkflowBuilder.tsseTask(name: String, i: Publisher<TsseInput>) = this.task<
                 --out-dir $outputsDir/tsse \
                 --tss ${params.tss.dockerPath}
 
-            cp $outputsDir/tsse/nodup-temp-alignments.large_tss_enrich.png $outputsDir/tsse/${input.exp}.${input.repName}.large_tss_enrich.png
-            cp $outputsDir/tsse/nodup-temp-alignments.tss_enrich.png $outputsDir/tsse/${input.exp}.${input.repName}.tss_enrich.png
-            cp $outputsDir/tsse/nodup-temp-alignments.tss_enrich.qc $outputsDir/tsse/${input.exp}.${input.repName}.tss_enrich.qc
+            mv $outputsDir/tsse/nodup-temp-alignments.large_tss_enrich.png $outputsDir/tsse/${input.exp}.${input.repName}.large_tss_enrich.png
+            mv $outputsDir/tsse/nodup-temp-alignments.tss_enrich.png $outputsDir/tsse/${input.exp}.${input.repName}.tss_enrich.png
+            mv $outputsDir/tsse/nodup-temp-alignments.tss_enrich.qc $outputsDir/tsse/${input.exp}.${input.repName}.tss_enrich.qc
             """
 }

@@ -65,6 +65,8 @@ def update_experiments(conf, infile, adapter):
             e['name'] = basename(linearr[0]).replace("_1.fastq.gz", "")
             # This is unreplicated data, so update it
             exprep = e['replicates'][0]
+            # Add a replicate name
+            exprep['name'] = "rep0"
             # Set the adapter
             exprep['adaptor-all'] = adapter
             # Update the short name of the sample

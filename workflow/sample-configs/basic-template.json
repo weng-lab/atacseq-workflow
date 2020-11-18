@@ -3,7 +3,6 @@
         "tasks": [
             "trim-adapter",
             "bowtie2",
-            "bt2-samstats",
             "filter-alignments",
             "tsse",
             "bam2ta",
@@ -110,22 +109,6 @@
                     "time": "5-00:00:00"
                 },
                 "partition": "5days",
-                "cpus": "4"
-            }
-        },
-
-
-        "bt2-samstats": {
-          "params": {
-                "nth": 4,
-                "sort-thread-mem": 3
-            },
-            "slurm": {
-                "sbatch-args": {
-                    "mem": "16G",
-                    "time": "12:00:00"
-                },
-                "partition": "12hours",
                 "cpus": "4"
             }
         },

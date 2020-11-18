@@ -24,6 +24,7 @@ data class OverlapOutput(
 fun WorkflowBuilder.overlapTask(i: Publisher<IdrInput>, peak: String) = this.task<IdrInput, OverlapOutput>("overlap-$peak", i, "overlap") {
     val params = taskParams<OverlapParams>()
 
+    // NOTE: Same as Tsse task, this docker image should be shrunk and updated
     dockerImage = "encodedcc/atac-seq-pipeline:v1.8.0"
 
     val prefix = "${input.exp}.${input.repName}"
