@@ -16,12 +16,14 @@ private val log = KotlinLogging.logger {}
 fun main(args: Array<String>) = run(atacSeqWorkflow, args)
 
 data class AtacSeqParams(
+    // What does this section do?
     val experiments: List<Experiment>,
     // ommitted: spr, idr, zpeaks
     val tasks: List<String> = listOf("trim-adapter","bowtie2","filter-alignments","bam2ta","macs2")
 )
 
 fun filterInput(exp: String, v: BamReplicate): Bowtie2Output = Bowtie2Output( exp, v.name, v.pairedend, v.bam!!)
+fun bt2SamstatsInput(exp: String, v: BamReplicate): Bowtie2Output = Bowtie2Output( exp, v.name, v.pairedend, v.bam!!)
 fun bam2taInput(exp: String, v: FilteredBamReplicate): FilterOutput = FilterOutput( exp, v.name, v.pairedend, v.bam!!, v.bai!!, v.bam, v.bai, null)
 fun tsseInput(exp: String, v: FilteredBamReplicate): FilterOutput = FilterOutput( exp, v.name, v.pairedend, v.bam!!, v.bai!!, v.bam, v.bai, null)
 fun macs2Input(exp: String, v: TagAlignReplicate): Bam2taOutput = Bam2taOutput(exp, v.ta!!, v.name, v.pairedend)
@@ -29,7 +31,7 @@ fun macs2Input(exp: String, v: TagAlignReplicate): Bam2taOutput = Bam2taOutput(e
 val atacSeqWorkflow = workflow("atac-seq-workflow") {
     val params = params<AtacSeqParams>()
 
-
+    // TRIM ADAPTER TASK
     val trimAdaptorInputs =  params.experiments.flatMap { exp ->
         exp.replicates
             .filter { (it is FastqReplicatePE || it is FastqReplicateSE) && ( params.tasks.contains("trim-adapter") ) }
@@ -37,26 +39,35 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
     }.toFlux()
     val trimAdapterOutput = trimAdapterTask( "trim-adapter", trimAdaptorInputs)
 
+    // BOWTIE2 TASK
     val bowtieInputs = params.experiments.flatMap { exp ->
         exp.replicates
             .filter { (it is MergedFastqReplicateSE || it is MergedFastqReplicatePE)}
             .map { if(it is MergedFastqReplicateSE) TrimAdapterOutput(exp.name, it.name, false, it.merged, null) else TrimAdapterOutput(exp.name, it.name, true, (it as MergedFastqReplicatePE).mergedR1,(it as MergedFastqReplicatePE).mergedR2) }
     }.toFlux()
-
-
     val bowtie2Input = trimAdapterOutput.concatWith(bowtieInputs).filter { params.tasks.contains("bowtie2") }.map { Bowtie2Input(it.exp, it.repName, it.pairedEnd, it.mergedR1, it.mergedR2) }
     val bowtie2Output = bowtie2Task("bowtie2", bowtie2Input)
 
+    // FILTER TASK
     val filterBamInput = params.experiments.flatMap { exp ->
         exp.replicates
             .filter { it is BamReplicate && it.bam !== null }
             .map { filterInput(exp.name, it as BamReplicate) }
     }.toFlux()
-
-
     val filterInput = bowtie2Output.concatWith(filterBamInput).filter {  params.tasks.contains("filter-alignments") }.map { FilterInput(it.exp, it.bam, it.repName, it.pairedEnd) }
     val filterOutput = filterTask("filter-alignments", filterInput)
 
+    // BT2 SAMSTATS TASK
+    val bt2SamstatsBamInput = params.experiments.flatMap { exp ->
+        exp.replicates
+            .filter { it is BamReplicate && it.bam !== null }
+            .map { bt2SamstatsInput(exp.name, it as BamReplicate) }
+    }.toFlux()
+    val bt2SamstatsInput = bowtie2Output.concatWith(bt2SamstatsBamInput).filter {  params.tasks.contains("bt2-samstats") }.map { Bt2SamstatsInput(it.exp, it.bam, it.repName, it.pairedEnd) }
+    val bt2SamstatsOutput = bt2SamstatsTask("bt2-samstats", bt2SamstatsInput)
+
+
+    //BAM2TA task
     val bam2taTaskInput = params.experiments.flatMap { exp ->
         exp.replicates
             .filter { it is FilteredBamReplicate && it.bam !== null }
@@ -65,7 +76,7 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
     val bam2taInput = filterOutput.concatWith(bam2taTaskInput).filter { params.tasks.contains("bam2ta") }.map { Bam2taInput(it.exp, it.bam, it.repName, it.pairedEnd) }
     val bam2taOutput = bam2taTask("bam2ta", bam2taInput)
 
-
+    // TSS ENRICHMENT TASK
     val tsseTaskInput = params.experiments.flatMap { exp ->
         exp.replicates
             .filter { it is FilteredBamReplicate && it.bam !== null }
@@ -74,6 +85,7 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
     val tsseInput = filterOutput.concatWith(tsseTaskInput).filter { params.tasks.contains("tsse") }.map { TsseInput(it.exp, it.bam, it.repName, it.pairedEnd) }
     val tsseOutput = tsseTask("tsse", tsseInput)
 
+    // MACS2 TASK
     val macs2TaskInput = params.experiments.flatMap { exp ->
         exp.replicates
             .filter { it is TagAlignReplicate && it.ta !== null }
