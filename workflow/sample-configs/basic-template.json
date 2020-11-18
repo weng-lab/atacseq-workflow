@@ -13,7 +13,7 @@
             "overlap"
         ],
         "experiments": [
-	 {
+	         {
                 "replicates": [
                     {
                         "-type": "model.FastqReplicatePE",
@@ -32,12 +32,11 @@
                                 "path": "ENCFF248EJF.fastq.gz",
                                 "local-path": "/data/projects/path/to/file"
                             }
-                        ],
-                        "name": "rep0"
-                    },
+                        ]
+                    }
                 ],
                   "name": "ENCSR356KRQ"
-	              }
+              }
 
         ]
     },
