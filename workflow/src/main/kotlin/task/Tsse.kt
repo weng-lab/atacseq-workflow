@@ -48,9 +48,11 @@ fun WorkflowBuilder.tsseTask(name: String, i: Publisher<TsseInput>) = this.task<
     // This task needs a bam index, and it writes a new even if you copy the .bam.bai file
     // However /inputs is a read-only filesystem, so it has trouble writing the bai
     // As a hacky work-around, I copy the input to /tmp so that it can happily write a .bai file
+    // Also, this task needs to cd to /tmp, because it tries to write temporary files to the wd
     command =
             """
             cp ${input.bam.dockerPath} /tmp/nodup-temp-alignments.bam
+            cd /tmp
 
             encode_task_tss_enrich.py \
                 --read-len ${params.readLen} \
