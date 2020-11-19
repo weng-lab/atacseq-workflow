@@ -40,7 +40,7 @@ fun WorkflowBuilder.idrTask(i: Publisher<IdrInput>, peak: String) = this.task<Id
             IdrOutput(
                     npeak = OutputFile("$nPrefix.narrowPeak.gz"),
                     bfiltNpeak = OutputFile("$nPrefix.bfilt.narrowPeak.gz"),
-                    bfiltNpeakBB = OutputFile("$prefix.bfilt.narrowPeak.bb"),
+                    bfiltNpeakBB = OutputFile("$nPrefix.bfilt.narrowPeak.bb"),
                     fripQc = OutputFile("$nPrefix.bfilt.frip.qc"),
                     idrPlot = OutputFile("$nPrefix.unthresholded-peaks.txt.png"),
                     idrUnthresholdedPeak = OutputFile("$nPrefix.unthresholded-peaks.txt.gz")
