@@ -46,14 +46,7 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
     }.toFlux()
     val bowtie2Input = trimAdapterOutput.concatWith(bowtieInputs).filter { params.tasks.contains("bowtie2") }.map { Bowtie2Input(it.exp, it.repName, it.pairedEnd, it.mergedR1, it.mergedR2) }
     val bowtie2Output = bowtie2Task("bowtie2", bowtie2Input)
-
-    val mitoBowtieInputs = params.experiments.flatMap { exp ->
-        exp.replicates
-            .filter { (it is MergedFastqReplicateSE || it is MergedFastqReplicatePE)}
-            .map { if(it is MergedFastqReplicateSE) TrimAdapterOutput(exp.name, it.name, false, it.merged, null) else TrimAdapterOutput(exp.name, it.name, true, (it as MergedFastqReplicatePE).mergedR1,(it as MergedFastqReplicatePE).mergedR2) }
-    }.toFlux()
-    val mitoBowtie2Input = trimAdapterOutput.concatWith(mitoBowtieInputs).filter { params.tasks.contains("bowtie2") }.map { Bowtie2Input(it.exp, it.repName, it.pairedEnd, it.mergedR1, it.mergedR2) }
-    val mitoBowtie2Output = bowtie2Task("mito-bowtie2", mitoBowtie2Input)
+    val mitoBowtie2Output = bowtie2Task("mito-bowtie2", bowtie2Input)
 
     // FILTER TASK
     val filterBamInput = params.experiments.flatMap { exp ->
