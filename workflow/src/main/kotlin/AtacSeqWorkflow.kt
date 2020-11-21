@@ -27,6 +27,7 @@ fun filterInput(exp: String, v: BamReplicate): Bowtie2Output = Bowtie2Output( ex
 fun bam2taInput(exp: String, v: FilteredBamReplicate): FilterOutput = FilterOutput( exp, v.name, v.pairedend, v.bam!!, null, null, null, null)
 fun tsseInput(exp: String, v: FilteredBamReplicate): FilterOutput = FilterOutput( exp, v.name, v.pairedend, v.bam!!, null, null, null, null)
 fun macs2Input(exp: String, v: TagAlignReplicate): Bam2taOutput = Bam2taOutput(exp, v.ta!!, v.name, v.pairedend)
+// Jack, I don't know what these functions do, and I'm having trouble figuring out how to make inputs for the Plots task
 //fun plotsInput(exp: String, v: bfiltNpeak): IdrOutput = IdrOutput(exp, v.name, v.npeak, v.bfiltNpeak, v.bfiltNpeakBB, v.fripQc, v.idrPlot, v.idrUnthresholdedPeak)
 
 val atacSeqWorkflow = workflow("atac-seq-workflow") {
