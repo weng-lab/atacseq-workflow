@@ -64,7 +64,10 @@ fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this
               /app/encode_task_post_align.py \
                 --chrsz ${params.chrsz.dockerPath} \
                 --mito-chr-name ${params.mitoChrName} \
-                --nth ${params.nth}
+                --nth ${params.nth} \
+                --out-dir $outputsDir/bowtie2 \
+                ${input.mergedR1.dockerPath} $outputsDir/bowtie2/${input.exp}.${input.repName}".srt.bam
 
+                ls -lh $outputsDir/bowtie2
             """
 }

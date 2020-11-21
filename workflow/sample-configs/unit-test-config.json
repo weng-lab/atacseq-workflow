@@ -240,6 +240,36 @@
                     "local-path": "/home/reimonnt/hg38/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.tar",
                     "-type": "krews.file.LocalInputFile"
                 },
+                "chrsz": {
+                    "path": "GRCh38_EBV.chrom.sizes.tsv",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38_EBV.chrom.sizes.tsv",
+                    "-type": "krews.file.LocalInputFile"
+                },
+                "nth": 8,
+                "mem-gb": 16
+            },
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "32G",
+                    "time": "5-00:00:00"
+                },
+                "partition": "5days",
+                "cpus": 8
+            }
+        },
+
+        "mito-bowtie2": {
+            "params": {
+                "idx-tar": {
+                    "path": "GRCh38_no_alt_analysis_set_GCA_000001405.15_mito_only_bowtie2_index.tar",
+                    "local-path": "/home/reimonnt/hg38/GRCh38_no_alt_analysis_set_GCA_000001405.15_mito_only_bowtie2_index.tar",
+                    "-type": "krews.file.LocalInputFile"
+                },
+                "chrsz": {
+                    "path": "GRCh38_EBV.chrom.sizes.tsv",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38_EBV.chrom.sizes.tsv",
+                    "-type": "krews.file.LocalInputFile"
+                },
                 "nth": 8,
                 "mem-gb": 16
             },
