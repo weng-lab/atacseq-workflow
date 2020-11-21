@@ -103,7 +103,7 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
     // type, and group by the condition.
 
     if (params.tasks.contains("idr")) {
-        val macs2CombinedOutput: Flux<Triple<String, String, Pair<File, File>>> = macs2TrOutput
+        val macs2CombinedOutput: Flux<Pair<String, Pair<String, Pair<File, File>>>> = macs2TrOutput
             // Flux<Macs2Output> -> Flux<GroupedFlux<String, Macs2Output>>
             .groupBy { it.exp }
             // ... -> Flux<List<Macs2Output>>
@@ -116,7 +116,7 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
                     } else {
                         Pair(it.second, it.first)
                     }
-                    Triple(first.exp, "${first.repName}-${second.repName}", Pair(first.npeak, second.npeak))
+                    Pair(first.exp, Pair("${first.repName}-${second.repName}", Pair(first.npeak, second.npeak)))
                 }.toFlux()
             }
 
@@ -135,45 +135,35 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
         // Combined pooled replicates
         val macs2PooledOutput = macs2Task(macs2PooledInput, "pooled")
 
-        val idrInput = Flux.merge(
-            macs2CombinedOutput.map { IdrInputValue(it.first, peaks = Pair(it.second, it.third)) },
+        // There may be multiple pairs of true replicates per exp
+        val allPeaks: MutableMap<String, MutableList<Pair<String, Pair<File, File>>>> = mutableMapOf()
+        val allPooledTa: MutableMap<String, File> = mutableMapOf()
+        val allPooledPeaks: MutableMap<String, File> = mutableMapOf()
+        val idrInput: Flux<IdrInput> = Flux.merge(
+            macs2CombinedOutput.map { IdrInputValue(it.first, peaks = it.second) },
             poolTaOutput.map { IdrInputValue(it.exp, pooledTa = it.pooledTa) },
             macs2PooledOutput.map { IdrInputValue(it.exp, pooledPeaks = it.npeak) }
         )
-            .groupBy { it.exp }
-            .flatMap { it.collectList() }
-            .flatMap {
-                val exp = it[0].exp
-                var peaks: MutableList<Pair<String, Pair<File, File>>> = mutableListOf()
-                var pooledTa: File? = null
-                var pooledPeaks: File? = null
-                for (i in it) {
-                    // FIXME: These preconditions we could check before we
-                    // start the workflow.
-                    if (i.peaks != null) {
-                        peaks.add(i.peaks)
-                    }
-                    if (i.pooledTa != null) {
-                        if (pooledTa != null) throw Exception("Too many pooled tas.")
-                        pooledTa = i.pooledTa
-                    }
-                    if (i.pooledPeaks != null) {
-                        if (pooledPeaks != null) throw Exception("Too many pooled peaks.")
-                        pooledPeaks = i.pooledPeaks
-                    }
+            .handle { it, sink ->
+                if (it.peaks != null) {
+                    val map = allPeaks.getOrPut(it.exp) { mutableListOf() }
+                    map.add(it.peaks)
                 }
-                // Any of these *could* occur if any of the previous tasks fail.
-                if (peaks.isEmpty()) {
-                    log.error { "No peaks for $exp." }
-                    Flux.empty()
-                } else if (pooledTa == null) {
-                    log.error { "No pooled ta for $exp." }
-                    Flux.empty()
-                } else if (pooledPeaks == null) {
-                    log.error { "No pooled peaks for $exp." }
-                    Flux.empty()
-                } else {
-                    peaks.map { peak -> IdrInput(exp, peak.first, peak.second.first, peak.second.second, pooledTa!!, pooledPeaks!!) }.toFlux()
+                if (it.pooledTa != null) {
+                    allPooledTa.put(it.exp, it.pooledTa)
+                }
+                if (it.pooledPeaks != null) {
+                    allPooledPeaks.put(it.exp, it.pooledPeaks)
+                }
+                val pooledTa = allPooledTa.get(it.exp)
+                val pooledPeaks = allPooledPeaks.get(it.exp)
+                if (pooledTa != null && pooledPeaks != null) {
+                    allPeaks
+                        .getOrPut(it.exp) { mutableListOf() }
+                        .takeWhile { true }
+                        .forEach { peak ->
+                            sink.next(IdrInput(it.exp, peak.first, peak.second.first, peak.second.second, pooledTa, pooledPeaks))
+                        }
                 }
             }
         idrTask(idrInput, "tr")
@@ -203,43 +193,31 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
 
             }
 
+        // There will only be pair of pseudo-reps here, so we don't need to
+        // keep the pooled-ta and pooled-peaks around once their used
+        val allPeaksPr: MutableMap<String, Pair<File, File>> = mutableMapOf()
+        val allPooledTaPr: MutableMap<String, File> = mutableMapOf()
+        val allPooledPeaksPr: MutableMap<String, File> = mutableMapOf()
         val idrInputPr: Flux<IdrInput> = Flux.merge(
             macs2PrOutputMerged.map { IdrInputValue(it.first, peaks = it.second) },
             bam2taOutput.map { IdrInputValue("${it.exp}.${it.repName}", pooledTa = it.ta) },
             macs2TrOutput.map { IdrInputValue("${it.exp}.${it.repName}", pooledPeaks = it.npeak) }
         )
-            .groupBy { it.exp }
-            .flatMap { it.collectList() }
             .handle { it, sink ->
-                val exp = it[0].exp
-                var peaks: Pair<File, File>? = null
-                var pooledTa: File? = null
-                var pooledPeaks: File? = null
-                for (i in it) {
-                    // FIXME: These preconditions we could check before we
-                    // start the workflow.
-                    if (i.peaks != null) {
-                        if (peaks != null) throw Exception("Invalid state. Should only have a single pair of pr peaks per exp.rep")
-                        peaks = i.peaks.second
-                    }
-                    if (i.pooledTa != null) {
-                        if (pooledTa != null) throw Exception("Too many pooled tas.")
-                        pooledTa = i.pooledTa
-                    }
-                    if (i.pooledPeaks != null) {
-                        if (pooledPeaks != null) throw Exception("Too many pooled peaks.")
-                        pooledPeaks = i.pooledPeaks
-                    }
+                if (it.peaks != null) {
+                    allPeaksPr.put(it.exp, it.peaks.second)
                 }
-                // Any of these *could* occur if any of the previous tasks fail.
-                if (peaks == null) {
-                    log.error { "No peaks for $exp." }
-                } else if (pooledTa == null) {
-                    log.error { "No pooled ta for $exp." }
-                } else if (pooledPeaks == null) {
-                    log.error { "No pooled peaks for $exp." }
-                } else {
-                    sink.next(IdrInput(exp, "pr", peaks.first, peaks.second, pooledTa!!, pooledPeaks!!))
+                if (it.pooledTa != null) {
+                    allPooledTaPr.put(it.exp, it.pooledTa)
+                }
+                if (it.pooledPeaks != null) {
+                    allPooledPeaksPr.put(it.exp, it.pooledPeaks)
+                }
+                if (allPeaksPr.get(it.exp) != null && allPooledTaPr.get(it.exp) != null && allPooledPeaksPr.get(it.exp) != null) {
+                    val peaks = allPeaksPr.remove(it.exp)!!
+                    val pooledTa = allPooledTaPr.remove(it.exp)!!
+                    val pooledPeaks = allPooledPeaksPr.remove(it.exp)!!
+                    sink.next(IdrInput(it.exp, "pr", peaks.first, peaks.second, pooledTa, pooledPeaks))
                 }
             }
         idrTask(idrInputPr, "pr")
