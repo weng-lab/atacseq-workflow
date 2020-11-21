@@ -3,6 +3,7 @@
         "tasks": [
             "trim-adapter",
             "bowtie2",
+            "mito-bowtie2",
             "filter-alignments",
             "tsse",
             "bam2ta",

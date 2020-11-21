@@ -13,7 +13,8 @@ data class Bowtie2Params(
         val memGb: Int = 8,
         val nth: Int = 4,
         val chrsz: File,
-        val mitoChrName: String = "chrM"
+        val mitoChrName: String = "chrM",
+        val includeMitoOutputs: Boolean = true
 
 )
 
@@ -29,7 +30,7 @@ data class Bowtie2Output(
         val exp: String,
         val repName: String,
         val pairedEnd: Boolean,
-        val bam: File,
+        val bam: File? = null,
         val bai: File? = null,
         val samstatsQC: File? = null,
         val read_length: File? = null,
@@ -47,11 +48,11 @@ fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this
                     exp = input.exp,
                     repName = input.repName,
                     pairedEnd = input.pairedEnd,
-                    bam = OutputFile("$prefix.srt.bam"),
-                    bai = OutputFile("$prefix.srt.bam.bai"),
+                    bam = if (params.includeMitoOutputs) OutputFile("$prefix.srt.bam") else null,
+                    bai = if (params.includeMitoOutputs) OutputFile("$prefix.srt.bam.bai") else null,
                     samstatsQC = OutputFile("$prefix.srt.samstats.qc"),
-                    read_length = OutputFile("$prefix.R1.merged.read_length.txt"),
-                    nonMitoSamstats = OutputFile("$prefix.srt.no_chrM.samstats.qc")
+                    read_length = if (params.includeMitoOutputs) OutputFile("$prefix.R1.merged.read_length.txt") else null,
+                    nonMitoSamstats = if (params.includeMitoOutputs) OutputFile("$prefix.srt.no_chrM.samstats.qc") else null
             )
 
     command =
