@@ -5,9 +5,9 @@
 import sys
 import os
 import argparse
-from encode_lib_common import (
+from common.encode_common import (
     mkdir_p, log, ls_l, rm_f, strip_ext_fastq)
-from encode_lib_genomic import (
+from common.encode_common_genomic import (
     get_read_length, remove_chrs_from_bam, samstat, samtools_index)
 
 

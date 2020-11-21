@@ -33,10 +33,10 @@ data class FilterOutput(
         val repName: String,
         val pairedEnd: Boolean,
         val bam: File,
-        val bai: File?,
-        val samstatsQC: File,
-        val dupQC: File?,
-        val pbcQC: File?
+        val bai: File? = null,
+        val samstatsQC: File? = null,
+        val dupQC: File? = null,
+        val pbcQC: File? = null
 )
 
 fun WorkflowBuilder.filterTask(name:String, i: Publisher<FilterInput>) = this.task<FilterInput, FilterOutput>(name, i) {

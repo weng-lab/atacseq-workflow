@@ -30,13 +30,16 @@ data class Bowtie2Output(
         val repName: String,
         val pairedEnd: Boolean,
         val bam: File,
-        val samstatsQC: File
+        val bai: File? = null,
+        val samstatsQC: File? = null,
+        val read_length: File? = null,
+        val nonMitoSamstats: File? = null
 )
 
 fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this.task<Bowtie2Input, Bowtie2Output>(name, i) {
     val params = taskParams<Bowtie2Params>()
 
-    dockerImage = "genomealmanac/atacseq-bowtie2:1.1.7"
+    dockerImage = "dockerhub.reimonn.com:443/atacseq-bowtie2:1.1.7"
 
     val prefix = "bowtie2/${input.exp}.${input.repName}"
     output =
@@ -45,7 +48,10 @@ fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this
                     repName = input.repName,
                     pairedEnd = input.pairedEnd,
                     bam = OutputFile("$prefix.srt.bam"),
-                    samstatsQC = OutputFile("$prefix.samstats.qc")
+                    bai = OutputFile("$prefix.srt.bam.bai"),
+                    samstatsQC = OutputFile("$prefix.srt.samstats.qc"),
+                    read_length = OutputFile("$prefix.R1.merged.read_length.txt"),
+                    nonMitoSamstats = OutputFile("$prefix.srt.no_chrM.samstats.qc")
             )
 
     command =
@@ -61,13 +67,16 @@ fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this
                 --out-dir $outputsDir/bowtie2 \
                 --output-prefix ${input.exp}.${input.repName}
 
-              /app/encode_task_post_align.py \
+            /app/encode_task_post_align.py \
                 --chrsz ${params.chrsz.dockerPath} \
                 --mito-chr-name ${params.mitoChrName} \
                 --nth ${params.nth} \
                 --out-dir $outputsDir/bowtie2 \
-                ${input.mergedR1.dockerPath} $outputsDir/bowtie2/${input.exp}.${input.repName}".srt.bam
+                ${input.mergedR1.dockerPath} $outputsDir/bowtie2/${input.exp}.${input.repName}.srt.bam
 
-                ls -lh $outputsDir/bowtie2
+            mv $outputsDir/bowtie2/non_mito/*.qc $outputsDir/bowtie2/
+
+            ls -lh $outputsDir/bowtie2
+            ls -lh $outputsDir/bowtie2/non_mito
             """
 }

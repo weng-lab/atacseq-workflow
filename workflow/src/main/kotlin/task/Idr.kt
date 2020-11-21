@@ -21,6 +21,8 @@ data class IdrInput(
 )
 
 data class IdrOutput(
+        val exp: String,
+        val repName: String,
         val npeak: File,
         val bfiltNpeak: File,
         val bfiltNpeakBB: File,
@@ -38,6 +40,8 @@ fun WorkflowBuilder.idrTask(i: Publisher<IdrInput>, peak: String) = this.task<Id
     val nPrefix = "idr/$prefix.idr${params.idrThreshold}"
     output =
             IdrOutput(
+                    exp = input.exp,
+                    repName = input.repName,
                     npeak = OutputFile("$nPrefix.narrowPeak.gz"),
                     bfiltNpeak = OutputFile("$nPrefix.bfilt.narrowPeak.gz"),
                     bfiltNpeakBB = OutputFile("$nPrefix.bfilt.narrowPeak.bb"),
