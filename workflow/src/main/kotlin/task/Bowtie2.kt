@@ -11,9 +11,11 @@ data class Bowtie2Params(
         val multimapping: Int? = 4,
         val scoreMin: String? = null,
         val memGb: Int = 8,
-        val nth: Int = 4
-)
+        val nth: Int = 4,
+        val chrsz: File,
+        val mitoChrName: String = "chrM"
 
+)
 
 data class Bowtie2Input(
         val exp: String,
@@ -59,8 +61,10 @@ fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this
                 --out-dir $outputsDir/bowtie2 \
                 --output-prefix ${input.exp}.${input.repName}
 
-            samtools sort -n -@ ${params.nth} -m 1G -O sam -T /tmp/srt-temp-bam $outputsDir/${prefix}.srt.bam | \
-              SAMstats --sorted_sam_file - --outf $outputsDir/${prefix}.samstats.qc
+              /app/encode_task_post_align.py \
+                --chrsz ${params.chrsz.dockerPath} \
+                --mito-chr-name ${params.mitoChrName} \
+                --nth ${params.nth}
 
             """
 }
