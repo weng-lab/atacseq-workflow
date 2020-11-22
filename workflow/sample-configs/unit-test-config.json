@@ -271,6 +271,7 @@
                     "local-path": "/home/reimonnt/hg38/Encode-GRCh38_EBV.chrom.sizes.tsv",
                     "-type": "krews.file.LocalInputFile"
                 },
+                "include-mito-outputs": false,
                 "nth": 8,
                 "mem-gb": 16
             },
