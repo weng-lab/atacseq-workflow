@@ -33,7 +33,7 @@ fun WorkflowBuilder.tsseTask(name: String, i: Publisher<TsseInput>) = this.task<
 
     // NOTE: This image should probably be updated to a local smaller image under /tasks
     // This pulls the entire atac-seq-pipeline image created by the DCC
-    dockerImage = "encodedcc/atac-seq-pipeline:v1.8.0"
+    dockerImage = "dockerhub.reimonn.com:443/atac-seq-pipeline:v1.8.0"
 
     val prefix = "tsse/${input.exp}.${input.repName}"
     output =

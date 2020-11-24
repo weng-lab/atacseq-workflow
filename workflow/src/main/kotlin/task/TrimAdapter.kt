@@ -21,14 +21,14 @@ data class TrimAdapterOutput(
         val exp: String,
         val repName: String,
         val pairedEnd: Boolean,
-        val mergedR1: File,        
+        val mergedR1: File,
         val mergedR2: File?
 )
 
 fun WorkflowBuilder.trimAdapterTask(name: String, i: Publisher<TrimAdapterInput>) = this.task<TrimAdapterInput, TrimAdapterOutput>(name, i) {
     val params = taskParams<TrimAdapterParams>()
 
-    dockerImage = "genomealmanac/atacseq-trim-adapters:1.1.7"
+    dockerImage = "dockerhub.reimonn.com:443/atacseq-trim-adapters:1.1.7"
 
     val rep = input.rep
     output =

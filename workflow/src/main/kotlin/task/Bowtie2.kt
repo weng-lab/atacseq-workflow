@@ -40,7 +40,7 @@ data class Bowtie2Output(
 fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this.task<Bowtie2Input, Bowtie2Output>(name, i) {
     val params = taskParams<Bowtie2Params>()
 
-    dockerImage = "dockerhub.reimonn.com:443/atacseq-bowtie2:1.1.7"
+    dockerImage = "dockerhub.reimonn.com:443/atacseq-bowtie:2.0.0"
 
     val prefix = "bowtie2/${input.exp}.${input.repName}"
     output =

@@ -34,7 +34,7 @@ data class IdrOutput(
 fun WorkflowBuilder.idrTask(i: Publisher<IdrInput>, peak: String) = this.task<IdrInput, IdrOutput>("idr-$peak", i, "idr") {
     val params = taskParams<IdrParams>()
 
-    dockerImage = "genomealmanac/atacseq-idr:1.0.0"
+    dockerImage = "dockerhub.reimonn.com:443/atacseq-idr:1.0.0"
 
     val prefix = "${input.exp}.${input.repName}"
     val nPrefix = "idr/$prefix.idr${params.idrThreshold}"

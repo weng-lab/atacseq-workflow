@@ -19,7 +19,7 @@ data class PoolTaOutput(
 )
 
 fun WorkflowBuilder.poolTaTask(i: Publisher<PoolTaInput>) = this.task<PoolTaInput, PoolTaOutput>("pool-ta", i) {
-    dockerImage = "genomealmanac/atacseq-poolta:1.1.2"
+    dockerImage = "dockerhub.reimonn.com:443/atacseq-poolta:1.1.2"
 
     val prefix = "pool-ta/${input.exp}.${input.prefix}"
     output =
