@@ -14,139 +14,40 @@
             "plots"
         ],
         "experiments": [
-	 {
-                "replicates": [
-                    {
-                        "-type": "model.FastqReplicatePE",
-                        "adaptor-all": "CTGTCTCTTATA",
-                        "fastqs-r1": [
-                            {
-                                "-type": "krews.file.HttpInputFile",
-                                "path": "ENCFF341MYG.fastq.gz",
-                                "url":
-                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep1/pair1/ENCFF341MYG.subsampled.400.fastq.gz"
-                            },
-                            {
-                                "-type": "krews.file.HttpInputFile",
-                                "path": "ENCFF106QGY.fastq.gz",
-                                "url":
-                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep1/pair1/ENCFF106QGY.subsampled.400.fastq.gz"
-                            }
-                            ],
+          {
+           "replicates": [
+               {
+                 "-type": "model.FastqReplicatePE",
+                 "adaptor-r1": ["CTGTCTCTTATACACATCTCCGAGCCCACGAGACATCTCGTATGCCGTCTTCTGCTTG"],
+                 "adaptor-r2": ["CTGTCTCTTATACACATCTGACGCTGCCGACGAGTGTAGATCTCGGTGGTCGCCGTATCATT"],
 
-                        "fastqs-r2": [
-                            {
-                                "-type": "krews.file.HttpInputFile",
-                                "path": "ENCFF248EJF.fastq.gz",
-                                "url":
-                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep1/pair2/ENCFF248EJF.subsampled.400.fastq.gz"
-                            },
-                            {
-                                "-type": "krews.file.HttpInputFile",
-                                "path": "ENCFF368TYI.fastq.gz",
-                                "url":
-                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep1/pair2/ENCFF368TYI.subsampled.400.fastq.gz"
-                            }
-                        ],
-                        "name": "rep1"
-                    },
+                 "fastqs-r1": [
+                       {
+                           "path": "ENCFF310FXX.fastq.gz",
+                           "url": "https://encode-public.s3.amazonaws.com/2017/02/07/017ffc63-a6b0-456d-801b-f505ba1688b9/ENCFF310FXX.fastq.gz",
+                           "-type": "krews.file.HttpInputFile"
+                       }
+                   ],
 
-
-
-
-                    {
-                        "-type": "model.FastqReplicatePE",
-                        "adaptor-all": "CTGTCTCTTATA",
-                        "fastqs-r1": [
-                            {
-                                "-type": "krews.file.HttpInputFile",
-                                "path": "ENCFF641SFZ.fastq.gz",
-                                "url":
-                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair1/ENCFF641SFZ.subsampled.400.fastq.gz"
-                            },
-                            {
-                                "-type": "krews.file.HttpInputFile",
-                                "path": "ENCFF751XTV.fastq.gz",
-                                "url":
-                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair1/ENCFF751XTV.subsampled.400.fastq.gz"
-                            },
-                            {
-                                "-type": "krews.file.HttpInputFile",
-                                "path": "ENCFF927LSG.fastq.gz",
-                                "url":
-                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair1/ENCFF927LSG.subsampled.400.fastq.gz"
-                            },
-                            {
-                                "-type": "krews.file.HttpInputFile",
-                                "path": "ENCFF859BDM.fastq.gz",
-                                "url":
-                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair1/ENCFF859BDM.subsampled.400.fastq.gz"
-                            },
-                            {
-                                "-type": "krews.file.HttpInputFile",
-                                "path": "ENCFF193RRC.fastq.gz",
-                                "url":
-                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair1/ENCFF193RRC.subsampled.400.fastq.gz"
-                            },
-                            {
-                                "-type": "krews.file.HttpInputFile",
-                                "path": "ENCFF366DFI.fastq.gz",
-                                "url":
-                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair1/ENCFF366DFI.subsampled.400.fastq.gz"
-                            }
-                        ],
-
-
-                        "fastqs-r2": [
-                            {
-                                "-type": "krews.file.HttpInputFile",
-                                "path": "ENCFF031ARQ.fastq.gz",
-                                "url":
-                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair2/ENCFF031ARQ.subsampled.400.fastq.gz"
-                            },
-                            {
-                                "-type": "krews.file.HttpInputFile",
-                                "path": "ENCFF590SYZ.fastq.gz",
-                                "url":
-                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair2/ENCFF590SYZ.subsampled.400.fastq.gz"
-                            },
-                            {
-                                "-type": "krews.file.HttpInputFile",
-                                "path": "ENCFF734PEQ.fastq.gz",
-                                "url":
-                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair2/ENCFF734PEQ.subsampled.400.fastq.gz"
-                            },
-                            {
-                                "-type": "krews.file.HttpInputFile",
-                                "path": "ENCFF007USV.fastq.gz",
-                                "url":
-                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair2/ENCFF007USV.subsampled.400.fastq.gz"
-                            },
-                            {
-                                "-type": "krews.file.HttpInputFile",
-                                "path": "ENCFF886FSC.fastq.gz",
-                                "url":
-                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair2/ENCFF886FSC.subsampled.400.fastq.gz"
-                            },
-                            {
-                                "-type": "krews.file.HttpInputFile",
-                                "path": "ENCFF573UXK.fastq.gz",
-                                "url":
-                                    "https://github.com/ENCODE-DCC/atac-seq-pipeline-test-data/raw/master/input/pe/fastqs/rep2/pair2/ENCFF573UXK.subsampled.400.fastq.gz"
-                            }
-                        ],
-                        "name": "rep2"
-                    }
-                ],
-                  "name": "ENCSR356KRQ"
-	              }
+                   "fastqs-r2": [
+                       {
+                           "path": "ENCFF420VKK.fastq.gz",
+                           "url": "https://encode-public.s3.amazonaws.com/2017/02/07/f5162bff-d0ce-457d-912b-eb8757551201/ENCFF420VKK.fastq.gz",
+                           "-type": "krews.file.HttpInputFile"
+                       }
+                   ],
+                   "name": "rep0"
+               }
+           ],
+           "name": "ENCSR831KAH_Tibial_Nerve"
+       }
 
         ]
     },
 
 
     "slurm": {
-        "job-completion-poll-interval": 120
+        "job-completion-poll-interval": 60
     },
 
 
@@ -172,7 +73,7 @@
 
             "slurm": {
                 "sbatch-args": {
-                    "mem": "32G",
+                    "mem": "60G",
                     "time": "12:00:00"
                 },
                 "partition": "12hours",

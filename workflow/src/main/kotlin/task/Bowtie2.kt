@@ -34,7 +34,8 @@ data class Bowtie2Output(
         val bai: File? = null,
         val samstatsQC: File? = null,
         val read_length: File? = null,
-        val nonMitoSamstats: File? = null
+        val nonMitoSamstats: File? = null,
+        val unqiueReadsQC: File? = null
 )
 
 fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this.task<Bowtie2Input, Bowtie2Output>(name, i) {
@@ -52,7 +53,8 @@ fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this
                     bai = if (params.includeMitoOutputs) OutputFile("$prefix.srt.bam.bai") else null,
                     samstatsQC = OutputFile("$prefix.srt.samstats.qc"),
                     read_length = if (params.includeMitoOutputs) OutputFile("$prefix.R1.merged.read_length.txt") else null,
-                    nonMitoSamstats = if (params.includeMitoOutputs) OutputFile("$prefix.srt.no_chrM.samstats.qc") else null
+                    nonMitoSamstats = if (params.includeMitoOutputs) OutputFile("$prefix.srt.no_chrM.samstats.qc") else null,
+                    unqiueReadsQC = OutputFile("$prefix.unique_reads.qc")
             )
 
     command =
@@ -76,6 +78,8 @@ fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this
                 ${input.mergedR1.dockerPath} $outputsDir/bowtie2/${input.exp}.${input.repName}.srt.bam
 
             mv $outputsDir/bowtie2/non_mito/*.qc $outputsDir/bowtie2/
+
+            samtools view -@ ${params.nth} -q 255 -f 2 $outputsDir/bowtie2/${input.exp}.${input.repName}.srt.bam | wc -l > $outputsDir/bowtie2/${input.exp}.${input.repName}.unique_reads.qc
 
             ls -lh $outputsDir/bowtie2
             ls -lh $outputsDir/bowtie2/non_mito

@@ -23,11 +23,11 @@ data class AtacSeqParams(
 )
 
 
-fun filterInput(exp: String, v: BamReplicate): Bowtie2Output = Bowtie2Output( exp, v.name, v.pairedend, v.bam!!, null, null)
+fun filterInput(exp: String, v: BamReplicate): Bowtie2Output = Bowtie2Output( exp, v.name, v.pairedend, v.bam!!, null, null, null)
 fun bam2taInput(exp: String, v: FilteredBamReplicate): FilterOutput = FilterOutput( exp, v.name, v.pairedend, v.bam!!, null, null, null, null)
 fun tsseInput(exp: String, v: FilteredBamReplicate): FilterOutput = FilterOutput( exp, v.name, v.pairedend, v.bam!!, null, null, null, null)
 fun macs2Input(exp: String, v: TagAlignReplicate): Bam2taOutput = Bam2taOutput(exp, v.ta!!, v.name, v.pairedend)
-//fun plotsInput(exp: String, v: bfiltNpeak): IdrOutput = IdrOutput(exp, v.name, v.npeak, v.bfiltNpeak, v.bfiltNpeakBB, v.fripQc, v.idrPlot, v.idrUnthresholdedPeak)
+
 
 val atacSeqWorkflow = workflow("atac-seq-workflow") {
     val params = params<AtacSeqParams>()
@@ -45,7 +45,7 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
     val bowtieInputs = params.experiments.flatMap { exp ->
         exp.replicates
             .filter { (it is MergedFastqReplicateSE || it is MergedFastqReplicatePE)}
-            .map { if(it is MergedFastqReplicateSE) TrimAdapterOutput(exp.name, it.name, false, it.merged, null) else TrimAdapterOutput(exp.name, it.name, true, (it as MergedFastqReplicatePE).mergedR1,(it as MergedFastqReplicatePE).mergedR2) }
+            .map { if(it is MergedFastqReplicateSE) TrimAdapterOutput(exp.name, it.name, false, it.merged, null, null) else TrimAdapterOutput(exp.name, it.name, true, (it as MergedFastqReplicatePE).mergedR1,(it as MergedFastqReplicatePE).mergedR2, null) }
     }.toFlux()
     // Run bowtie2 alignment
     val bowtie2Input = trimAdapterOutput.concatWith(bowtieInputs).filter { params.tasks.contains("bowtie2") }.map { Bowtie2Input(it.exp, it.repName, it.pairedEnd, it.mergedR1, it.mergedR2) }
@@ -230,6 +230,13 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
             }
         val idrOutputPr = idrTask(idrInputPr, "pr")
         val overlapOutputPr = overlapTask(idrInputPr, "pr")
+
+
+        // PLOTS TASK
+        val plotsInputPr = idrOutputPr.map{PlotsInput(it.exp, it.repName, it.bfiltNpeak)}
+        val plotsInputTr = idrOutputTr.map{PlotsInput(it.exp, it.repName, it.bfiltNpeak)}
+        val plotsInput = plotsInputPr.concatWith(plotsInputTr)
+        val plotsOutput = plotsTask("plots", plotsInput)
     }
 
     if (params.tasks.contains("zpeaks")) {
