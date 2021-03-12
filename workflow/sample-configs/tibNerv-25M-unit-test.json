@@ -1,0 +1,314 @@
+{
+    "params": {
+        "tasks": [
+            "trim-adapter",
+            "bowtie2",
+            "mito-bowtie2",
+            "filter-alignments",
+            "tsse",
+            "bam2ta",
+            "macs2",
+            "spr",
+            "idr",
+            "overlap",
+            "plots"
+        ],
+        "experiments": [
+          {
+           "replicates": [
+               {
+                 "-type": "model.FastqReplicatePE",
+                 "adaptor-r1": ["CTGTCTCTTATACACATCTCCGAGCCCACGAGACATCTCGTATGCCGTCTTCTGCTTG"],
+                 "adaptor-r2": ["CTGTCTCTTATACACATCTGACGCTGCCGACGAGTGTAGATCTCGGTGGTCGCCGTATCATT"],
+
+                 "fastqs-r1": [
+                       {
+                           "path": "tibial_nerve_25M_1.fastq.gz",
+                           "local-path": "/home/reimonnt/data/atacseq-runtime-test/tibial_nerve_25M_1.fastq.gz",
+                           "-type": "krews.file.LocalInputFile"
+                       }
+                   ],
+
+                   "fastqs-r2": [
+                       {
+                           "path": "tibial_nerve_25M_2.fastq.gz",
+                           "local-path": "/home/reimonnt/data/atacseq-runtime-test/tibial_nerve_25M_2.fastq.gz",
+                           "-type": "krews.file.LocalInputFile"
+                       }
+                   ],
+                   "name": "r0"
+               }
+           ],
+           "name": "tibial_nerve_25M"
+         }
+        ]
+    },
+
+    "slurm": {
+        "job-completion-poll-interval": 30
+    },
+
+
+    "task": {
+        "macs2": {
+            "params": {
+                "chrsz": {
+                    "path": "GRCh38_EBV.chrom.sizes.tsv",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38_EBV.chrom.sizes.tsv",
+                    "-type": "krews.file.LocalInputFile"
+                },
+
+                "blacklist": {
+                    "path": "Encode-GRCh38.blacklist.bed.gz",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38.blacklist.bed.gz",
+                    "-type": "krews.file.LocalInputFile"
+                },
+
+                "gensz": "hs",
+                "smooth-win": 150,
+		            "regex-bfilt-peak-chr-name": "chr[\\dXY]+"
+            },
+
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "32G",
+                    "time": "12:00:00"
+                },
+                "partition": "12hours",
+                "cpus": 8
+            }
+        },
+
+
+        "trim-adapter": {
+            "params": {
+                "nth": 2
+            },
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "8G",
+                    "time": "12:00:00"
+                },
+                "partition": "12hours",
+                "cpus": "2"
+            }
+        },
+
+
+        "filter-alignments": {
+            "params": {
+		            "chrsz": {
+                    "path": "GRCh38_EBV.chrom.sizes.tsv.gz",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38_EBV.chrom.sizes.tsv.gz",
+                    "-type": "krews.file.LocalInputFile"
+                },
+                "nth": 4,
+	              "mem-gb": 8
+            },
+
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "16G",
+                    "time": "12:00:00"
+                },
+                "partition": "12hours",
+                "cpus": "4"
+            }
+        },
+
+
+        "bam2ta": {
+            "params": {
+              "nth": 4,
+              "mem-gb": 12
+           },
+
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "16G",
+                    "time": "12:00:00"
+                },
+                "partition": "12hours",
+                "cpus": 4
+            }
+        },
+
+
+        "bowtie2": {
+            "params": {
+                "idx-tar": {
+                    "path": "GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.tar",
+                    "local-path": "/home/reimonnt/hg38/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.tar",
+                    "-type": "krews.file.LocalInputFile"
+                },
+                "chrsz": {
+                    "path": "GRCh38_EBV.chrom.sizes.tsv",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38_EBV.chrom.sizes.tsv",
+                    "-type": "krews.file.LocalInputFile"
+                },
+                "nth": 6,
+                "mem-gb": 16
+            },
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "32G",
+                    "time": "12:00:00"
+                },
+                "partition": "12hours",
+                "cpus": 6
+            }
+        },
+
+        "mito-bowtie2": {
+            "params": {
+                "idx-tar": {
+                    "path": "GRCh38_no_alt_analysis_set_GCA_000001405.15_mito_only_bowtie2_index.tar",
+                    "local-path": "/home/reimonnt/hg38/GRCh38_no_alt_analysis_set_GCA_000001405.15_mito_only_bowtie2_index.tar",
+                    "-type": "krews.file.LocalInputFile"
+                },
+                "chrsz": {
+                    "path": "GRCh38_EBV.chrom.sizes.tsv",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38_EBV.chrom.sizes.tsv",
+                    "-type": "krews.file.LocalInputFile"
+                },
+                "include-mito-outputs": false,
+                "nth": 6,
+                "mem-gb": 16
+            },
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "32G",
+                    "time": "12:00:00"
+                },
+                "partition": "12hours",
+                "cpus": 6
+            }
+        },
+
+
+        "spr": {
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "32G",
+                    "time": "12:00:00"
+                },
+                "partition": "12hours",
+                "cpus": "4"
+            }
+        },
+
+
+        "idr": {
+            "params": {
+              "chrsz": {
+                    "path": "GRCh38_EBV.chrom.sizes.tsv",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38_EBV.chrom.sizes.tsv",
+                    "-type": "krews.file.LocalInputFile"
+                },
+
+                "blacklist": {
+                    "path": "Encode-GRCh38.blacklist.bed.gz",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38.blacklist.bed.gz",
+                    "-type": "krews.file.LocalInputFile"
+                }
+            },
+
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "16G",
+                    "time": "12:00:00"
+                },
+                "partition": "12hours",
+                "cpus": "4"
+            }
+
+        },
+
+
+        "overlap": {
+            "params": {
+              "chrsz": {
+                    "path": "GRCh38_EBV.chrom.sizes.tsv",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38_EBV.chrom.sizes.tsv",
+                    "-type": "krews.file.LocalInputFile"
+                },
+
+                "blacklist": {
+                    "path": "Encode-GRCh38.blacklist.bed.gz",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38.blacklist.bed.gz",
+                    "-type": "krews.file.LocalInputFile"
+                }
+            },
+
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "16G",
+                    "time": "12:00:00"
+                },
+                "partition": "12hours",
+                "cpus": "4"
+            }
+
+        },
+
+
+        "tsse": {
+            "params": {
+              "chrsz": {
+                    "path": "GRCh38_EBV.chrom.sizes.tsv",
+                    "local-path": "/home/reimonnt/hg38/Encode-GRCh38_EBV.chrom.sizes.tsv",
+                    "-type": "krews.file.LocalInputFile"
+                },
+
+                "tss": {
+                    "path": "Encode_TSS_Enrich.bed.gz",
+                    "local-path": "/home/reimonnt/hg38/Encode_TSS_Enrich.bed.gz",
+                    "-type": "krews.file.LocalInputFile"
+                },
+
+                "read-len": 100
+            },
+
+            "slurm": {
+                "sbatch-args": {
+                    "mem": "8G",
+                    "time": "12:00:00"
+                },
+                "partition": "12hours",
+                "cpus": "2"
+            }
+        },
+
+        "plots": {
+          "params": {
+            "phylop": {
+                  "path": "hg38.phyloP100way.bw",
+                  "local-path": "/home/reimonnt/hg38/hg38.phyloP100way.bw",
+                  "-type": "krews.file.LocalInputFile"
+              },
+              "ccre": {
+                    "path": "GRCh38-ccREs.bed.gz",
+                    "local-path": "/home/reimonnt/hg38/GRCh38-ccREs.bed.gz",
+                    "-type": "krews.file.LocalInputFile"
+              },
+              "rdhs": {
+                  "path": "GRCh38-rDHSs.bed6.gz",
+                  "local-path": "/home/reimonnt/hg38/GRCh38-rDHSs.bed6.gz",
+                  "-type": "krews.file.LocalInputFile"
+              }
+          },
+
+          "slurm": {
+              "sbatch-args": {
+                  "mem": "8G",
+                  "time": "12:00:00"
+              },
+              "partition": "12hours",
+              "cpus": "2"
+          }
+        }
+
+
+    },
+    "working-dir": "/home/reimonnt/atacseq-runtime-test"
+}

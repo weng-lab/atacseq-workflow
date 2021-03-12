@@ -22,10 +22,12 @@ data class AtacSeqParams(
     val tasks: List<String> = listOf("trim-adapter","bowtie2","filter-alignments","bam2ta","macs2")
 )
 
-fun filterInput(exp: String, v: BamReplicate): Bowtie2Output = Bowtie2Output( exp, v.name, v.pairedend, v.bam!!, v.bam!!)
-fun bam2taInput(exp: String, v: FilteredBamReplicate): FilterOutput = FilterOutput( exp, v.name, v.pairedend, v.bam!!, v.bai!!, v.bam, v.bai, null)
-fun tsseInput(exp: String, v: FilteredBamReplicate): FilterOutput = FilterOutput( exp, v.name, v.pairedend, v.bam!!, v.bai!!, v.bam, v.bai, null)
+
+fun filterInput(exp: String, v: BamReplicate): Bowtie2Output = Bowtie2Output( exp, v.name, v.pairedend, v.bam!!, null, null, null)
+fun bam2taInput(exp: String, v: FilteredBamReplicate): FilterOutput = FilterOutput( exp, v.name, v.pairedend, v.bam!!, null, null, null, null)
+fun tsseInput(exp: String, v: FilteredBamReplicate): FilterOutput = FilterOutput( exp, v.name, v.pairedend, v.bam!!, null, null, null, null)
 fun macs2Input(exp: String, v: TagAlignReplicate): Bam2taOutput = Bam2taOutput(exp, v.ta!!, v.name, v.pairedend)
+
 
 val atacSeqWorkflow = workflow("atac-seq-workflow") {
     val params = params<AtacSeqParams>()
@@ -38,14 +40,20 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
     }.toFlux()
     val trimAdapterOutput = trimAdapterTask( "trim-adapter", trimAdaptorInputs)
 
+
     // BOWTIE2 TASK
     val bowtieInputs = params.experiments.flatMap { exp ->
         exp.replicates
             .filter { (it is MergedFastqReplicateSE || it is MergedFastqReplicatePE)}
-            .map { if(it is MergedFastqReplicateSE) TrimAdapterOutput(exp.name, it.name, false, it.merged, null) else TrimAdapterOutput(exp.name, it.name, true, (it as MergedFastqReplicatePE).mergedR1,(it as MergedFastqReplicatePE).mergedR2) }
+            .map { if(it is MergedFastqReplicateSE) TrimAdapterOutput(exp.name, it.name, false, it.merged, null, null) else TrimAdapterOutput(exp.name, it.name, true, (it as MergedFastqReplicatePE).mergedR1,(it as MergedFastqReplicatePE).mergedR2, null) }
     }.toFlux()
+    // Run bowtie2 alignment
     val bowtie2Input = trimAdapterOutput.concatWith(bowtieInputs).filter { params.tasks.contains("bowtie2") }.map { Bowtie2Input(it.exp, it.repName, it.pairedEnd, it.mergedR1, it.mergedR2) }
     val bowtie2Output = bowtie2Task("bowtie2", bowtie2Input)
+    // Run mito_only bowtie2 alignment
+    val mitoBowtie2Input = trimAdapterOutput.concatWith(bowtieInputs).filter { params.tasks.contains("mito-bowtie2") }.map { Bowtie2Input(it.exp, "${it.repName}-mito", it.pairedEnd, it.mergedR1, it.mergedR2) }
+    val mitoBowtie2Output = bowtie2Task("mito-bowtie2", mitoBowtie2Input)
+
 
     // FILTER TASK
     val filterBamInput = params.experiments.flatMap { exp ->
@@ -166,8 +174,8 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
                         }
                 }
             }
-        idrTask(idrInput, "tr")
-        overlapTask(idrInput, "tr")
+        val idrOutputTr = idrTask(idrInput, "tr")
+        val overlapOutputTr = overlapTask(idrInput, "tr")
 
         val macs2PrInput = sprOut.flatMap {
             listOf(
@@ -220,8 +228,15 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
                     sink.next(IdrInput(it.exp, "pr", peaks.first, peaks.second, pooledTa, pooledPeaks))
                 }
             }
-        idrTask(idrInputPr, "pr")
-        overlapTask(idrInputPr, "pr")
+        val idrOutputPr = idrTask(idrInputPr, "pr")
+        val overlapOutputPr = overlapTask(idrInputPr, "pr")
+
+
+        // PLOTS TASK
+        val plotsInputPr = idrOutputPr.map{PlotsInput(it.exp, it.repName, it.bfiltNpeak)}
+        val plotsInputTr = idrOutputTr.map{PlotsInput(it.exp, it.repName, it.bfiltNpeak)}
+        val plotsInput = plotsInputPr.concatWith(plotsInputTr)
+        val plotsOutput = plotsTask("plots", plotsInput)
     }
 
     if (params.tasks.contains("zpeaks")) {

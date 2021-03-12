@@ -30,7 +30,7 @@ data class Bam2taOutput(
 fun WorkflowBuilder.bam2taTask(name: String,i: Publisher<Bam2taInput>) = this.task<Bam2taInput, Bam2taOutput>(name, i) {
     val params = taskParams<Bam2taParams>()
 
-    dockerImage = "genomealmanac/atacseq-bam2ta:1.1.4"
+    dockerImage = "dockerhub.reimonn.com:443/atacseq-bam2ta:1.1.4"
 
     val prefix = "bam2ta/${input.exp}.${input.repName}"
     output =

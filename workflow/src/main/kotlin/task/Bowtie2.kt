@@ -11,9 +11,12 @@ data class Bowtie2Params(
         val multimapping: Int? = 4,
         val scoreMin: String? = null,
         val memGb: Int = 8,
-        val nth: Int = 4
-)
+        val nth: Int = 4,
+        val chrsz: File,
+        val mitoChrName: String = "chrM",
+        val includeMitoOutputs: Boolean = true
 
+)
 
 data class Bowtie2Input(
         val exp: String,
@@ -28,13 +31,17 @@ data class Bowtie2Output(
         val repName: String,
         val pairedEnd: Boolean,
         val bam: File,
-        val samstatsQC: File
+        val bai: File? = null,
+        val samstatsQC: File? = null,
+        val read_length: File? = null,
+        val nonMitoSamstats: File? = null,
+        val unqiueReadsQC: File? = null
 )
 
 fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this.task<Bowtie2Input, Bowtie2Output>(name, i) {
     val params = taskParams<Bowtie2Params>()
 
-    dockerImage = "genomealmanac/atacseq-bowtie2:1.1.7"
+    dockerImage = "dockerhub.reimonn.com:443/atacseq-bowtie:2.0.0"
 
     val prefix = "bowtie2/${input.exp}.${input.repName}"
     output =
@@ -43,7 +50,11 @@ fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this
                     repName = input.repName,
                     pairedEnd = input.pairedEnd,
                     bam = OutputFile("$prefix.srt.bam"),
-                    samstatsQC = OutputFile("$prefix.samstats.qc")
+                    bai = if (params.includeMitoOutputs) OutputFile("$prefix.srt.bam.bai") else null,
+                    samstatsQC = OutputFile("$prefix.srt.samstats.qc"),
+                    read_length = if (params.includeMitoOutputs) OutputFile("$prefix.R1.merged.read_length.txt") else null,
+                    nonMitoSamstats = if (params.includeMitoOutputs) OutputFile("$prefix.srt.no_chrM.samstats.qc") else null,
+                    unqiueReadsQC = OutputFile("$prefix.unique_reads.qc")
             )
 
     command =
@@ -59,8 +70,18 @@ fun WorkflowBuilder.bowtie2Task(name: String, i: Publisher<Bowtie2Input>) = this
                 --out-dir $outputsDir/bowtie2 \
                 --output-prefix ${input.exp}.${input.repName}
 
-            samtools sort -n -@ ${params.nth} -m 1G -O sam -T /tmp/srt-temp-bam $outputsDir/${prefix}.srt.bam | \
-              SAMstats --sorted_sam_file - --outf $outputsDir/${prefix}.samstats.qc
+            /app/encode_task_post_align.py \
+                --chrsz ${params.chrsz.dockerPath} \
+                --mito-chr-name ${params.mitoChrName} \
+                --nth ${params.nth} \
+                --out-dir $outputsDir/bowtie2 \
+                ${input.mergedR1.dockerPath} $outputsDir/bowtie2/${input.exp}.${input.repName}.srt.bam
 
+            mv $outputsDir/bowtie2/non_mito/*.qc $outputsDir/bowtie2/
+
+            samtools view -@ ${params.nth} -q 255 -f 2 $outputsDir/bowtie2/${input.exp}.${input.repName}.srt.bam | wc -l > $outputsDir/bowtie2/${input.exp}.${input.repName}.unique_reads.qc
+
+            ls -lh $outputsDir/bowtie2
+            ls -lh $outputsDir/bowtie2/non_mito
             """
 }

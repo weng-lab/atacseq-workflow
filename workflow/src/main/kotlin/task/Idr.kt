@@ -21,6 +21,8 @@ data class IdrInput(
 )
 
 data class IdrOutput(
+        val exp: String,
+        val repName: String,
         val npeak: File,
         val bfiltNpeak: File,
         val bfiltNpeakBB: File,
@@ -32,15 +34,17 @@ data class IdrOutput(
 fun WorkflowBuilder.idrTask(i: Publisher<IdrInput>, peak: String) = this.task<IdrInput, IdrOutput>("idr-$peak", i, "idr") {
     val params = taskParams<IdrParams>()
 
-    dockerImage = "genomealmanac/atacseq-idr:1.0.0"
+    dockerImage = "dockerhub.reimonn.com:443/atacseq-idr:1.0.0"
 
     val prefix = "${input.exp}.${input.repName}"
     val nPrefix = "idr/$prefix.idr${params.idrThreshold}"
     output =
             IdrOutput(
+                    exp = input.exp,
+                    repName = input.repName,
                     npeak = OutputFile("$nPrefix.narrowPeak.gz"),
                     bfiltNpeak = OutputFile("$nPrefix.bfilt.narrowPeak.gz"),
-                    bfiltNpeakBB = OutputFile("$prefix.bfilt.narrowPeak.bb"),
+                    bfiltNpeakBB = OutputFile("$nPrefix.bfilt.narrowPeak.bb"),
                     fripQc = OutputFile("$nPrefix.bfilt.frip.qc"),
                     idrPlot = OutputFile("$nPrefix.unthresholded-peaks.txt.png"),
                     idrUnthresholdedPeak = OutputFile("$nPrefix.unthresholded-peaks.txt.gz")

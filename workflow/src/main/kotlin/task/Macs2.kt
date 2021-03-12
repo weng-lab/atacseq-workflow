@@ -34,8 +34,8 @@ data class Macs2Output(
 
 fun WorkflowBuilder.macs2Task(i: Publisher<Macs2Input>, peak: String) = this.task<Macs2Input, Macs2Output>("macs2-$peak", i, "macs2") {
     val params = taskParams<Macs2Params>()
-  
-    dockerImage = "genomealmanac/atacseq-macs2:2.2.21"
+
+    dockerImage = "dockerhub.reimonn.com:443/atacseq-macs2:2.2.21"
 
     val prefix = "macs2/${input.exp}.${input.repName}"
     val npPrefix = "$prefix.pval${params.pvalThresh}.${capNumPeakFilePrefix(params.capNumPeak)}"

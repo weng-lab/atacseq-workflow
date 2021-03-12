@@ -33,16 +33,16 @@ data class FilterOutput(
         val repName: String,
         val pairedEnd: Boolean,
         val bam: File,
-        val bai: File?,
-        val samstatsQC: File,
-        val dupQC: File?,
-        val pbcQC: File?
+        val bai: File? = null,
+        val samstatsQC: File? = null,
+        val dupQC: File? = null,
+        val pbcQC: File? = null
 )
 
 fun WorkflowBuilder.filterTask(name:String, i: Publisher<FilterInput>) = this.task<FilterInput, FilterOutput>(name, i) {
     val params = taskParams<FilterParams>()
 
-    dockerImage = "genomealmanac/atacseq-filter-alignments:2.0.10"
+    dockerImage = "dockerhub.reimonn.com:443/atacseq-filter-alignments:2.0.10"
     val prefix = "filter/${input.exp}.${input.repName}"
     val noDupRemoval = params.noDupRemoval
     val bam_prefix = "$prefix${if (noDupRemoval) ".filt" else ".nodup" }${if (params.filterChrs.size > 0) ".no_${params.filterChrs.joinToString("_")}" else "" }"

@@ -21,14 +21,15 @@ data class TrimAdapterOutput(
         val exp: String,
         val repName: String,
         val pairedEnd: Boolean,
-        val mergedR1: File,        
-        val mergedR2: File?
+        val mergedR1: File,
+        val mergedR2: File?,
+        val trimQC: File? = null
 )
 
 fun WorkflowBuilder.trimAdapterTask(name: String, i: Publisher<TrimAdapterInput>) = this.task<TrimAdapterInput, TrimAdapterOutput>(name, i) {
     val params = taskParams<TrimAdapterParams>()
 
-    dockerImage = "genomealmanac/atacseq-trim-adapters:1.1.7"
+    dockerImage = "dockerhub.reimonn.com:443/atacseq-trim-adapters:1.1.7"
 
     val rep = input.rep
     output =
@@ -38,7 +39,8 @@ fun WorkflowBuilder.trimAdapterTask(name: String, i: Publisher<TrimAdapterInput>
                         repName = rep.name,
                         pairedEnd = false,
                         mergedR1 = OutputFile("trim/${input.exp}.${rep.name}.R1.merged.fastq.gz"),
-                        mergedR2 = null
+                        mergedR2 = null,
+                        trimQC = OutputFile("trim/${input.exp}.${rep.name}_CountReads.qc")
                 )
             } else {
                 TrimAdapterOutput(
@@ -46,7 +48,8 @@ fun WorkflowBuilder.trimAdapterTask(name: String, i: Publisher<TrimAdapterInput>
                         repName = rep.name,
                         pairedEnd = true,
                         mergedR1 = OutputFile("trim/${input.exp}.${rep.name}.R1.merged.fastq.gz"),
-                        mergedR2 = OutputFile("trim/${input.exp}.${rep.name}.R2.merged.fastq.gz")
+                        mergedR2 = OutputFile("trim/${input.exp}.${rep.name}.R2.merged.fastq.gz"),
+                        trimQC = OutputFile("trim/${input.exp}.${rep.name}_CountReads.qc")
                 )
             }
 
@@ -97,5 +100,18 @@ fun WorkflowBuilder.trimAdapterTask(name: String, i: Publisher<TrimAdapterInput>
                 --nth ${params.nth} \
                 --output-prefix ${input.exp}.${rep.name} \
                 --out-dir $outputsDir/trim
+
+            # Count input reads
+            for f in ${'$'}(echo ${fastqs} | sed "s/,/ /g")
+            do
+                echo ${'$'}f
+                echo ${'$'}((${'$'}(zcat ${'$'}f | wc -l) / 4))    ${'$'}(basename ${'$'}f) >> $outputsDir/trim/${input.exp}.${rep.name}_CountReads.qc
+            done
+            # Count trimmed reads
+            for f in $outputsDir/trim/*.fastq.gz
+            do
+                echo ${'$'}f
+                echo ${'$'}((${'$'}(zcat ${'$'}f | wc -l) / 4))    ${'$'}(basename ${'$'}f) >> $outputsDir/trim/${input.exp}.${rep.name}_CountReads.qc
+            done
             """
 }

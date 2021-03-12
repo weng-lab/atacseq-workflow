@@ -20,7 +20,7 @@ data class SprOutput(
 )
 
 fun WorkflowBuilder.sprTask(i: Publisher<SprInput>) = this.task<SprInput, SprOutput>("spr", i) {
-    dockerImage = "genomealmanac/atacseq-spr:1.0.2"
+    dockerImage = "dockerhub.reimonn.com:443/atacseq-spr:1.0.2"
 
     val prefix = "spr/${input.exp}.${input.repName}"
     output =
