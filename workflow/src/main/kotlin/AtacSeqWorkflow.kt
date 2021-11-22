@@ -38,13 +38,21 @@ val atacSeqWorkflow = workflow("atac-seq-workflow") {
     }.toFlux()
     val trimAdapterOutput = trimAdapterTask( "trim-adapter", trimAdaptorInputs)
 
+    //Check if any GeoInput file in experiments
+    val geoInputs = params.experiments.flatMap { exp ->
+        exp.replicates
+                .filter {  (it is GeoInputReplicateSE || it is GeoInputReplicatePE) }
+                .map { if(it is GeoInputReplicateSE) TrimAdapterOutput(exp.name, it.name, false, it.geofile, null) else TrimAdapterOutput(exp.name, it.name, true, (it as GeoInputReplicatePE).geofileR1,(it as GeoInputReplicatePE).geofileR2) }
+    }.toFlux()
+
     // BOWTIE2 TASK
     val bowtieInputs = params.experiments.flatMap { exp ->
         exp.replicates
             .filter { (it is MergedFastqReplicateSE || it is MergedFastqReplicatePE)}
             .map { if(it is MergedFastqReplicateSE) TrimAdapterOutput(exp.name, it.name, false, it.merged, null) else TrimAdapterOutput(exp.name, it.name, true, (it as MergedFastqReplicatePE).mergedR1,(it as MergedFastqReplicatePE).mergedR2) }
     }.toFlux()
-    val bowtie2Input = trimAdapterOutput.concatWith(bowtieInputs).filter { params.tasks.contains("bowtie2") }.map { Bowtie2Input(it.exp, it.repName, it.pairedEnd, it.mergedR1, it.mergedR2) }
+    val bowtie2Input = trimAdapterOutput.concatWith(bowtieInputs).concatWith(geoInputs).filter { params.tasks.contains("bowtie2") }.map { Bowtie2Input(it.exp, it.repName, it.pairedEnd, it.mergedR1, it.mergedR2) }
+
     val bowtie2Output = bowtie2Task("bowtie2", bowtie2Input)
 
     // FILTER TASK

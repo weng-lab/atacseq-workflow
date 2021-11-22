@@ -14,11 +14,19 @@ val artifactID = "atacseq-workflow"
 
 repositories {
     jcenter()
+    maven {
+        url = uri("https://maven.pkg.github.com/weng-lab/krews")        
+        credentials {
+                username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_USER")
+                password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+            }
+    }
 }
 
 dependencies {
     compile(kotlin("stdlib-jdk8"))
-    compile("io.krews", "krews", "0.10.11")
+    //compile("io.krews", "krews", "0.10.11")
+    implementation("io.krews:krews:0.12.5")
 }
 
 application {
